@@ -4,6 +4,8 @@
 @using DBPCLabs.Data
 @inject AppDbContext DbContext
 
+@inject IJSRuntime JS 
+
 <PageTitle>Управління лабораторіями</PageTitle>
 
 <div class="container mt-4">
@@ -23,14 +25,14 @@
     }
     else if (!laboratories.Any())
     {
-        <div class="modern-card text-center p-5">
+        <div class="modern-card text-center p-5 shadow-sm" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
             <h4 class="text-muted">У базі даних ще немає жодної лабораторії</h4>
             <a href="/laboratories/add" class="btn btn-outline-primary mt-3 rounded-pill px-4">Створити першу</a>
         </div>
     }
     else
     {
-        <div class="modern-card">
+        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
             <div class="table-responsive">
                 <table class="table table-hover border-white mb-0">
                     <thead>
@@ -46,13 +48,15 @@
                         @foreach (var lab in laboratories)
                         {
                             <tr>
-                                <td class="text-muted">#@lab.Id</td>
-                                <td><strong class="text-dark">@lab.Name</strong></td>
-                                <td><span class="badge bg-light text-dark border">@lab.RoomNumber</span></td>
-                                <td>@lab.Capacity ПК</td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-light text-primary rounded-pill me-2">Деталі</button>
-                                    <button class="btn btn-sm btn-light text-danger rounded-pill">Видалити</button>
+                                <td class="text-muted align-middle">#@lab.Id</td>
+                                <td class="align-middle"><strong class="text-dark">@lab.Name</strong></td>
+                                <td class="align-middle"><span class="badge bg-light text-dark border p-2">@lab.RoomNumber</span></td>
+                                <td class="align-middle">@lab.Capacity ПК</td>
+                                <td class="text-end align-middle">
+                             
+                                    <a href="/laboratories/details/@lab.Id" class="btn btn-sm btn-light text-primary rounded-pill me-2 px-3 fw-bold">Деталі</a>
+                                    
+                                    <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold" @onclick="() => DeleteLaboratory(lab)">Видалити</button>
                                 </td>
                             </tr>
                         }
@@ -64,13 +68,23 @@
 </div>
 
 @code {
-    // Змінна, в якій будуть зберігатися наші дані
     private List<Laboratory>? laboratories;
 
-    // Цей метод автоматично викликається при завантаженні сторінки
     protected override async Task OnInitializedAsync()
     {
-        // Робимо запит до PostgreSQL: "Дай нам всі лабораторії"
         laboratories = await DbContext.Laboratories.ToListAsync();
+    }
+    
+    private async Task DeleteLaboratory(Laboratory lab)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Ви дійсно хочете видалити '{lab.Name}'?\nУсі дані буде втрачено.");
+        
+        if (confirmed)
+        {
+            DbContext.Laboratories.Remove(lab);
+            await DbContext.SaveChangesAsync();
+            
+            laboratories!.Remove(lab);
+        }
     }
 }

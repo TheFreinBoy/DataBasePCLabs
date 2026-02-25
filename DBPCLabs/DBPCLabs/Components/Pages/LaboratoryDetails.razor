@@ -1,0 +1,80 @@
+@page "/laboratories/details/{Id:int}"
+@using Microsoft.EntityFrameworkCore
+@using DBPCLabs.Models
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
+
+<PageTitle>Деталі лабораторії</PageTitle>
+
+<div class="container mt-5">
+    
+    <div class="mb-4">
+        <a href="/laboratories" class="btn btn-light text-secondary rounded-pill px-4 border shadow-sm">
+            <i class="bi bi-arrow-left me-2"></i> Назад до списку
+        </a>
+    </div>
+
+    @if (lab == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Завантаження інформації...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-5">
+                @* Картка з інформацією *@
+                <div class="shadow-sm p-5 h-100" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                    
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-primary text-white rounded d-flex justify-content-center align-items-center me-3" style="width: 50px; height: 50px;">
+                            <i class="bi bi-pc-display" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h3 class="fw-bold text-dark m-0">@lab.Name</h3>
+                    </div>
+                    
+                    <hr />
+
+                    <div class="mb-3 mt-4">
+                        <span class="text-muted d-block" style="font-size: 0.85rem; text-transform: uppercase;">Номер аудиторії</span>
+                        <span class="fw-bold text-dark fs-5">@lab.RoomNumber</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="text-muted d-block" style="font-size: 0.85rem; text-transform: uppercase;">Місткість (кількість ПК)</span>
+                        <span class="fw-bold text-dark fs-5">@lab.Capacity одиниць</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <span class="text-muted d-block" style="font-size: 0.85rem; text-transform: uppercase;">Внутрішній ID в базі</span>
+                        <span class="text-secondary">#@lab.Id</span>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div class="col-md-7">
+                @* тут буде таблиця комп'ютерів *@
+                <div class="shadow-sm p-5 h-100 d-flex flex-column justify-content-center align-items-center text-center" style="background: #f8f9fa; border-radius: 12px; border: 1px dashed #ced4da;">
+                    <i class="bi bi-tools text-muted mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted fw-bold">Список комп'ютерів</h5>
+                    <p class="text-secondary small">Тут згодом ми виведемо всі системні блоки, які закріплені за цією аудиторією.</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Laboratory? lab;
+
+    protected override async Task OnInitializedAsync()
+    {
+        lab = await DbContext.Laboratories.FirstOrDefaultAsync(l => l.Id == Id);
+    }
+}
