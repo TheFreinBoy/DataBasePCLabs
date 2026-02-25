@@ -1,0 +1,56 @@
+@page "/laboratories/add"
+@using DBPCLabs.Models
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+
+<PageTitle>Додати лабораторію</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Нова комп'ютерна лабораторія</h2>
+            <hr />
+
+            @* Форма, яка автоматично прив'язана до нашого об'єкта newLab *@
+            <EditForm Model="@newLab" OnValidSubmit="SaveLaboratory">
+                
+                <div class="mb-3">
+                    <label class="form-label">Назва лабораторії:</label>
+                    <InputText @bind-Value="newLab.Name" class="form-control" placeholder="Напр.: Лабораторія Cisco" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Номер аудиторії:</label>
+                    <InputText @bind-Value="newLab.RoomNumber" class="form-control" placeholder="Напр.: 402-А" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Місткість (кількість ПК):</label>
+                    <InputNumber @bind-Value="newLab.Capacity" class="form-control" min="1" required />
+                </div>
+
+                <button type="submit" class="btn btn-success">Зберегти в базу</button>
+                <a href="/laboratories" class="btn btn-secondary">Скасувати</a>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Створюємо порожній об'єкт, який будемо заповнювати з форми
+    private Laboratory newLab = new Laboratory();
+
+    // Цей метод викличеться, коли ми натиснемо "Зберегти"
+    private async Task SaveLaboratory()
+    {
+        // 1. Додаємо об'єкт у контекст бази
+        DbContext.Laboratories.Add(newLab);
+        
+        // 2. Фізично зберігаємо в PostgreSQL
+        await DbContext.SaveChangesAsync();
+
+        // 3. Повертаємо користувача назад на сторінку зі списком
+        Navigation.NavigateTo("/laboratories");
+    }
+}

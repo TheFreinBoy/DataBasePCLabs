@@ -1,0 +1,76 @@
+@page "/laboratories"
+@using Microsoft.EntityFrameworkCore
+@using DBPCLabs.Models
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
+
+<PageTitle>Управління лабораторіями</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark">Комп'ютерні лабораторії</h2>
+        <a href="/laboratories/add" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-plus-lg"></i> Додати нову
+        </a>
+    </div>
+
+    @if (laboratories == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Завантаження даних...</p>
+        </div>
+    }
+    else if (!laboratories.Any())
+    {
+        <div class="modern-card text-center p-5">
+            <h4 class="text-muted">У базі даних ще немає жодної лабораторії</h4>
+            <a href="/laboratories/add" class="btn btn-outline-primary mt-3 rounded-pill px-4">Створити першу</a>
+        </div>
+    }
+    else
+    {
+        <div class="modern-card">
+            <div class="table-responsive">
+                <table class="table table-hover border-white mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Назва</th>
+                            <th>Аудиторія</th>
+                            <th>Місткість</th>
+                            <th class="text-end">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var lab in laboratories)
+                        {
+                            <tr>
+                                <td class="text-muted">#@lab.Id</td>
+                                <td><strong class="text-dark">@lab.Name</strong></td>
+                                <td><span class="badge bg-light text-dark border">@lab.RoomNumber</span></td>
+                                <td>@lab.Capacity ПК</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light text-primary rounded-pill me-2">Деталі</button>
+                                    <button class="btn btn-sm btn-light text-danger rounded-pill">Видалити</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    // Змінна, в якій будуть зберігатися наші дані
+    private List<Laboratory>? laboratories;
+
+    // Цей метод автоматично викликається при завантаженні сторінки
+    protected override async Task OnInitializedAsync()
+    {
+        // Робимо запит до PostgreSQL: "Дай нам всі лабораторії"
+        laboratories = await DbContext.Laboratories.ToListAsync();
+    }
+}
