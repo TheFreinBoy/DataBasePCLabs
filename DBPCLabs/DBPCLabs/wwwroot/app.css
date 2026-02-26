@@ -86,3 +86,123 @@ body {
     text-transform: uppercase;
     font-size: 0.85rem;
 }
+/* Dark theme */
+
+html[data-theme='dark'],
+body[data-theme='dark'],
+body[data-theme='dark'] #app,
+body[data-theme='dark'] .page,
+body[data-theme='dark'] main,
+body[data-theme='dark'] article,
+body[data-theme='dark'] .content {
+    background-color: #151521 !important;
+    color: #a2a3b7 !important;
+}
+
+body[data-theme='dark'] h1,
+body[data-theme='dark'] h2,
+body[data-theme='dark'] h3,
+body[data-theme='dark'] h4,
+body[data-theme='dark'] h5,
+body[data-theme='dark'] h6,
+body[data-theme='dark'] .text-dark {
+    color: #ffffff !important;
+}
+
+body[data-theme='dark'] .bg-light,
+body[data-theme='dark'] .shadow-sm,
+body[data-theme='dark'] [style*="background: white;"] {
+    background-color: #1e1e2d !important;
+    border-color: #2b2b40 !important;
+}
+
+body[data-theme='dark'] .form-control,
+body[data-theme='dark'] .form-select {
+    background-color: #151521 !important;
+    color: #ffffff !important;
+    border-color: #2b2b40 !important;
+}
+
+body[data-theme='dark'] .form-control:focus,
+body[data-theme='dark'] .form-select:focus {
+    background-color: #151521 !important;
+    color: #ffffff !important;
+    border-color: #0d6efd !important;
+}
+
+body[data-theme='dark'] .theme-card {
+    background-color: #151521 !important;
+    border-color: #2b2b40 !important;
+}
+body[data-theme='dark'] .theme-card.active-theme {
+    background-color: rgba(13, 110, 253, 0.15) !important;
+    border-color: #0d6efd !important;
+}
+
+
+body[data-theme='dark'] .table {
+    --bs-table-bg: #1e1e2d !important;
+    --bs-table-color: #ffffff !important;
+    --bs-table-border-color: #2b2b40 !important;
+}
+
+body[data-theme='dark'] .table > :not(caption) > * > * {
+    background-color: #1e1e2d !important;
+    color: #ffffff !important;
+    border-bottom-color: #2b2b40 !important;
+}
+
+body[data-theme='dark'] .table-hover tbody tr:hover > * {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+
+body[data-theme='dark'] .dropdown-menu {
+    background-color: #1e1e2d !important;
+    border: 1px solid #2b2b40 !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5) !important;
+}
+
+body[data-theme='dark'] .dropdown-item {
+    color: #a2a3b7 !important;
+}
+
+body[data-theme='dark'] .dropdown-item:hover {
+    background-color: #2b2b40 !important;
+    color: #ffffff !important;
+}
+
+body[data-theme='dark'] .dropdown-divider {
+    border-top-color: #2b2b40 !important;
+}
+
+body[data-theme='dark'] .text-muted {
+    color: #a2a3b7 !important;
+}
+
+body[data-theme='dark'] .bg-primary {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+body[data-theme='dark'] .btn-light,
+body[data-theme='dark'] .table .btn {
+    background-color: #2b2b40 !important;
+    border-color: #2b2b40 !important;
+}
+
+body[data-theme='dark'] .btn-light:hover,
+body[data-theme='dark'] .table .btn:hover {
+    background-color: #323248 !important;
+    border-color: #474761 !important;
+}
+
+body[data-theme='dark'] .text-danger {
+    color: #ff6b6b !important; 
+}
+body[data-theme='dark'] .text-success {
+    color: #51cf66 !important; 
+}
+body[data-theme='dark'] .text-primary {
+    color: #339af0 !important; 
+}

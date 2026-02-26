@@ -20,6 +20,17 @@
 }
 
 ::deep .custom-btn.active {
-    background-color: #0d6efd !important; /* Яскравий синій */
+    background-color: #0d6efd !important; 
     color: #ffffff !important;
+}
+
+::deep .dropdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1040; 
+    background: transparent; 
+    cursor: default;
 }

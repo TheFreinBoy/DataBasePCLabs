@@ -1,0 +1,215 @@
+﻿@page "/computers/edit/{Id:int}"
+@using Microsoft.EntityFrameworkCore
+@using DBPCLabs.Models
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+
+<PageTitle>Редагування комп'ютера</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            @if (editPc == null)
+            {
+                <div class="text-center mt-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Завантаження даних...</p>
+                </div>
+            }
+            else
+            {
+                <div class="shadow-sm p-5" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                    
+                    <h3 class="fw-bold text-dark mb-4">
+                        <i class="bi bi-pencil-square text-success me-2"></i> Редагування ПК: @editPc.InventoryNumber
+                    </h3>
+                    
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger rounded-3 d-flex align-items-center shadow-sm">
+                            <i class="bi bi-shield-x me-2 fs-4"></i>
+                            <div>
+                                <strong>Увага!</strong> @errorMessage
+                            </div>
+                        </div>
+                    }
+
+                    <EditForm Model="@editPc" OnValidSubmit="UpdateComputer">
+                        <DataAnnotationsValidator />
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Інвентарний номер:</label>
+                            <input type="text" value="@editPc.InventoryNumber" class="form-control form-control-lg bg-light text-muted fw-bold" disabled />
+                            <small class="text-secondary mt-1 d-block"><i class="bi bi-lock me-1"></i> Інвентарний номер змінити неможливо.</small>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Процесор (Сімейство):</label>
+                                <select class="form-select form-select-lg bg-light" @bind="SelectedCpuFamily">
+                                    <option value="" disabled>-- Оберіть сімейство --</option>
+                                    @foreach (var family in cpuDictionary.Keys)
+                                    {
+                                        <option value="@family">@family</option>
+                                    }
+                                </select>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(SelectedCpuFamily) && cpuDictionary.ContainsKey(SelectedCpuFamily))
+                            {
+                                <div class="col-md-6 fade-in">
+                                    <label class="form-label fw-bold text-success">Точна модель:</label>
+                                    <select class="form-select form-select-lg border-success" @bind="ExactCpuModel">
+                                        <option value="" disabled>-- Оберіть модель --</option>
+                                        @foreach (var model in cpuDictionary[SelectedCpuFamily])
+                                        {
+                                            <option value="@model">@model</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Оперативна пам'ять (ГБ):</label>
+                                <InputNumber @bind-Value="editPc.RamGb" class="form-control form-control-lg bg-light" />
+                                <ValidationMessage For="@(() => editPc.RamGb)" class="text-danger small mt-1 fw-bold" />
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Розташування (Аудиторія):</label>
+                                <InputSelect @bind-Value="editPc.LaboratoryId" class="form-select form-select-lg bg-light">
+                                    @foreach (var lab in laboratories!)
+                                    {
+                                        <option value="@lab.Id">@lab.Name (Ауд. @lab.RoomNumber)</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => editPc.LaboratoryId)" class="text-danger small mt-1 fw-bold" />
+                            </div>
+                        </div>
+
+                        <div class="mt-5 pt-3 border-top">
+                            <button type="submit" class="btn btn-success shadow-sm me-3 fw-bold rounded-pill px-5 py-2">
+                                <i class="bi bi-save me-1"></i> Зберегти зміни
+                            </button>
+                            <a href="/computers" class="btn btn-light text-secondary rounded-pill px-4 py-2 border">
+                                Скасувати
+                            </a>
+                        </div>
+                    </EditForm>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .fade-in { animation: fadeIn 0.3s ease-in-out; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Computer? editPc;
+    private List<Laboratory>? laboratories;
+    private string? errorMessage;
+    private int originalLaboratoryId; 
+
+    private Dictionary<string, List<string>> cpuDictionary = new()
+    {
+        { "Intel Core i3", new() { "10100F", "12100F", "13100F", "14100" } },
+        { "Intel Core i5", new() { "10400F", "11400F", "12400F", "13400F", "13600K" } },
+        { "Intel Core i7", new() { "10700K", "12700K", "13700K", "14700K" } },
+        { "Intel Core i9", new() { "12900K", "13900K", "14900K" } },
+        { "AMD Ryzen 3", new() { "3100", "3200G", "4100" } },
+        { "AMD Ryzen 5", new() { "3600", "4600G", "5500", "5600G", "5600X", "7600X" } },
+        { "AMD Ryzen 7", new() { "3700X", "5700X", "5800X3D", "7700X", "7800X3D" } },
+        { "AMD Ryzen 9", new() { "3900X", "5900X", "5950X", "7900X", "7950X3D" } },
+        { "Apple M1", new() { "Базова версія", "Pro", "Max", "Ultra" } },
+        { "Apple M2", new() { "Базова версія", "Pro", "Max", "Ultra" } },
+        { "Apple M3", new() { "Базова версія", "Pro", "Max" } },
+        { "Apple M4", new() { "Базова версія", "Pro", "Max" } },
+        { "Інший", new() { "Офісний ПК (Intel Pentium)", "Офісний ПК (AMD Athlon)", "Кастомна збірка" } }
+    };
+
+    private string _selectedCpuFamily = "";
+    private string SelectedCpuFamily 
+    {
+        get => _selectedCpuFamily;
+        set { _selectedCpuFamily = value; _exactCpuModel = ""; CombineCpuValues(); }
+    }
+
+    private string _exactCpuModel = "";
+    private string ExactCpuModel 
+    {
+        get => _exactCpuModel;
+        set { _exactCpuModel = value; CombineCpuValues(); }
+    }
+
+    private void CombineCpuValues()
+    {
+        if (editPc != null)
+        {
+            if (string.IsNullOrEmpty(_exactCpuModel))
+                editPc.Cpu = ""; 
+            else if (_exactCpuModel == "Базова версія")
+                editPc.Cpu = _selectedCpuFamily;
+            else
+                editPc.Cpu = $"{_selectedCpuFamily} {_exactCpuModel}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        laboratories = await DbContext.Laboratories.ToListAsync();
+        editPc = await DbContext.Computers.FindAsync(Id);
+
+        if (editPc != null)
+        {
+            originalLaboratoryId = editPc.LaboratoryId; 
+            ParseCpuString(editPc.Cpu); 
+        }
+    }
+    
+    private void ParseCpuString(string dbCpuString)
+    {
+        foreach (var family in cpuDictionary.Keys)
+        {
+            if (dbCpuString.StartsWith(family))
+            {
+                _selectedCpuFamily = family;
+                var modelPart = dbCpuString.Replace(family, "").Trim();
+                
+                _exactCpuModel = string.IsNullOrEmpty(modelPart) ? "Базова версія" : modelPart;
+                return;
+            }
+        }
+    }
+
+    private async Task UpdateComputer()
+    {
+        errorMessage = null;
+        if (string.IsNullOrWhiteSpace(editPc!.Cpu)) return;
+        
+        if (editPc.LaboratoryId != originalLaboratoryId)
+        {
+            var targetLab = await DbContext.Laboratories.FindAsync(editPc.LaboratoryId);
+            
+            int computersInTargetLab = await DbContext.Computers.CountAsync(c => c.LaboratoryId == editPc.LaboratoryId);
+
+            if (targetLab != null && computersInTargetLab >= targetLab.Capacity)
+            {
+                errorMessage = $"Неможливо перенести комп'ютер. Аудиторія {targetLab.RoomNumber} переповнена! Максимальна місткість: {targetLab.Capacity} ПК.";
+                return; 
+            }
+        }
+
+        await DbContext.SaveChangesAsync();
+        Navigation.NavigateTo("/computers");
+    }
+}

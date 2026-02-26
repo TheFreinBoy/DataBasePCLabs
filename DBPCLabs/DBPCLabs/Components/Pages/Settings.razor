@@ -1,0 +1,103 @@
+﻿@page "/settings"
+@using System.Globalization
+@using Microsoft.Extensions.Localization
+@using DBPCLabs.Resources
+@inject IStringLocalizer<SharedResource> Loc
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>Налаштування системи</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            <div class="d-flex align-items-center mb-4">
+                <i class="bi bi-gear text-primary" style="font-size: 2rem; margin-right: 15px;"></i>
+                <h2 class="fw-bold text-dark m-0">@Loc["SettingsTitle"]</h2>
+            </div>
+            
+            <div class="shadow-sm p-4 mb-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                <h5 class="fw-bold text-dark border-bottom pb-3 mb-4"><i class="bi bi-palette me-2"></i> @Loc["Appearance"]</h5>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark mb-3">Тема інтерфейсу:</label>
+                    <div class="d-flex gap-3">
+                        
+                        <div class="theme-card @(currentTheme == "light" ? "active-theme" : "inactive-theme")" @onclick='() => SelectTheme("light")'>
+                            <i class="bi bi-sun-fill text-warning" style="font-size: 2rem;"></i>
+                            <span class="fw-bold mt-2 d-block @(currentTheme == "light" ? "" : "text-secondary")">Світла</span>
+                        </div>
+
+                        <div class="theme-card @(currentTheme == "dark" ? "active-theme" : "inactive-theme")" @onclick='() => SelectTheme("dark")'>
+                            <i class="bi bi-moon-stars-fill @(currentTheme == "dark" ? "text-primary" : "text-secondary")" style="font-size: 2rem;"></i>
+                            <span class="fw-bold mt-2 d-block @(currentTheme == "dark" ? "" : "text-secondary")">Темна</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="shadow-sm p-4 mb-5" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                <h5 class="fw-bold text-dark border-bottom pb-3 mb-4">
+                    <i class="bi bi-globe me-2"></i> Локалізація
+                </h5>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark">Мова системи:</label>
+                    <select class="form-select form-select-lg bg-light" style="max-width: 300px;" 
+                            value="@CultureInfo.CurrentCulture.Name" 
+                            @onchange="ChangeLanguage">
+                        <option value="uk-UA">🇺🇦 Українська</option>
+                        <option value="en-US">🇬🇧 English</option>
+                    </select>
+                    <small class="text-muted mt-2 d-block">
+                        <i class="bi bi-info-circle me-1"></i> Після зміни мови сторінка автоматично перезавантажиться.
+                    </small>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .theme-card { width: 140px; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+    .active-theme { border: 2px solid #0d6efd; background-color: #f8fbff; box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15); }
+    .inactive-theme { border: 2px solid #edf0f5; background-color: #f4f6f9; }
+    .inactive-theme:hover { border-color: #ced4da; background-color: #e9ecef; }
+</style>
+
+@code {
+    private string currentTheme = "light";
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var savedTheme = await JS.InvokeAsync<string>("eval", "localStorage.getItem('theme') || 'light'");
+            currentTheme = savedTheme;
+            StateHasChanged(); 
+        }
+    }
+
+    private async Task SelectTheme(string theme)
+    {
+        currentTheme = theme;
+        
+        await JS.InvokeVoidAsync("eval", $"localStorage.setItem('theme', '{theme}'); document.body.setAttribute('data-theme', '{theme}');");
+    }
+
+    private async Task ChangeLanguage(ChangeEventArgs e)
+    {
+        if (e.Value is string selectedCulture)
+        {
+
+            var cookieValue = $".AspNetCore.Culture=c={selectedCulture}|uic={selectedCulture};path=/;max-age=31536000";
+            
+            await JS.InvokeVoidAsync("document.cookie.replace", "/(?:(?:^|.*;\\s*)\\.AspNetCore\\.Culture\\s*\\=\\s*([^;]*).*$)|^.*$/, \"$1\"/", ""); 
+            await JS.InvokeVoidAsync("eval", $"document.cookie = '{cookieValue}'");
+            
+            Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+        }
+    }
+    
+}

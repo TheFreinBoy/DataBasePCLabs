@@ -1,15 +1,25 @@
 ﻿@inherits LayoutComponentBase
+@inject IJSRuntime JS
 
 <div class="page">
-    @* Верхня навігаційна панель *@
     <header>
         <NavMenu />
     </header>
-
-    @* Основний контент сторінки *@
+    
     <main class="main-content">
         <article class="content px-4">
             @Body
         </article>
     </main>
 </div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+            await JS.InvokeVoidAsync("eval", "var theme = localStorage.getItem('theme') || 'light'; document.body.setAttribute('data-theme', theme);");
+        }
+    }
+}

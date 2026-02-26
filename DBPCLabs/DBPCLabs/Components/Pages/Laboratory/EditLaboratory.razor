@@ -1,0 +1,84 @@
+﻿@page "/laboratories/edit/{Id:int}"
+@using Microsoft.EntityFrameworkCore
+@using DBPCLabs.Models
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+
+<PageTitle>Редагування лабораторії</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            @if (editLab == null)
+            {
+                <div class="text-center mt-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Завантаження даних...</p>
+                </div>
+            }
+            else
+            {
+                <div class="shadow-sm p-5" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                    
+                    <h3 class="fw-bold text-dark mb-4">
+                        <i class="bi bi-pencil-square text-warning me-2"></i> Редагування: @editLab.Name
+                    </h3>
+                    
+                    <EditForm Model="@editLab" OnValidSubmit="UpdateLaboratory">
+                        
+                        <DataAnnotationsValidator />
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Назва лабораторії:</label>
+                            <InputText @bind-Value="editLab.Name" class="form-control form-control-lg bg-light" />
+                            <ValidationMessage For="@(() => editLab.Name)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Номер аудиторії (лише цифри):</label>
+                            <InputText @bind-Value="editLab.RoomNumber" class="form-control form-control-lg bg-light" />
+                            <ValidationMessage For="@(() => editLab.RoomNumber)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Місткість (кількість ПК):</label>
+                            <InputNumber @bind-Value="editLab.Capacity" class="form-control form-control-lg bg-light" />
+                            <ValidationMessage For="@(() => editLab.Capacity)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+
+                        <div class="mt-5 pt-2 border-top">
+                            <button type="submit" class="btn btn-success text-dark rounded-pill px-5 py-2 shadow-sm me-3 fw-bold">
+                                <i class="bi bi-save me-1"></i> Зберегти зміни
+                            </button>
+                            <a href="/laboratories" class="btn btn-light text-secondary rounded-pill px-4 py-2 border">
+                                Скасувати
+                            </a>
+                        </div>
+                    </EditForm>
+
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Laboratory? editLab;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editLab = await DbContext.Laboratories.FindAsync(Id);
+    }
+
+    private async Task UpdateLaboratory()
+    {
+        await DbContext.SaveChangesAsync();
+        
+        Navigation.NavigateTo("/laboratories");
+    }
+}

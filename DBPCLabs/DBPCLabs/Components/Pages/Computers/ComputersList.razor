@@ -1,0 +1,103 @@
+﻿@page "/computers"
+@using Microsoft.EntityFrameworkCore
+@using DBPCLabs.Models
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
+@inject IJSRuntime JS 
+
+<PageTitle>Управління технікою</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark">Парк комп'ютерної техніки</h2>
+        <a href="/computers/add" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-pc-display"></i> Додати новий ПК
+        </a>
+    </div>
+
+    @if (computers == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Завантаження бази техніки...</p>
+        </div>
+    }
+    else if (!computers.Any())
+    {
+        <div class="shadow-sm p-5 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <i class="bi bi-display text-muted mb-3" style="font-size: 3rem;"></i>
+            <h4 class="text-muted">Жодного комп'ютера ще не додано</h4>
+            <a href="/computers/add" class="btn btn-outline-primary mt-3 rounded-pill px-4">Зареєструвати перший ПК</a>
+        </div>
+    }
+    else
+    {
+        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <div class="table-responsive">
+                <table class="table table-hover border-white mb-0">
+                    <thead>
+                        <tr>
+                            <th>Інв. номер</th>
+                            <th>Характеристики (CPU / RAM)</th>
+                            <th>Локація (Аудиторія)</th>
+                            <th class="text-end">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pc in computers)
+                        {
+                            <tr>
+                                <td class="align-middle">
+                                    <strong class="text-dark">@pc.InventoryNumber</strong>
+                                </td>
+                                <td class="align-middle">
+                                    <span class="badge bg-secondary text-white me-1">@pc.Cpu</span>
+                                    <span class="badge border border-secondary text-secondary">@pc.RamGb ГБ</span>
+                                </td>
+                                <td class="align-middle">
+                                    @if (pc.Laboratory != null)
+                                    {
+                                        <a href="/laboratories/details/@pc.LaboratoryId" class="text-decoration-none fw-bold text-primary">
+                                            @pc.Laboratory.Name (Ауд. @pc.Laboratory.RoomNumber)
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger small"><i class="bi bi-exclamation-triangle"></i> Не закріплено</span>
+                                    }
+                                </td>
+                                <td class="text-end align-middle">
+                                    <a href="/computers/edit/@pc.Id" class="btn btn-sm btn-light text-success rounded-pill me-2 px-3 fw-bold">Редагувати</a>
+                                    <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold" @onclick="() => DeleteComputer(pc)">Видалити</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Computer>? computers;
+
+    protected override async Task OnInitializedAsync()
+    {
+   
+        computers = await DbContext.Computers
+            .Include(c => c.Laboratory) 
+            .ToListAsync();
+    }
+
+    private async Task DeleteComputer(Computer pc)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Видалити комп'ютер з інвентарним номером {pc.InventoryNumber}?");
+        if (confirmed)
+        {
+            DbContext.Computers.Remove(pc);
+            await DbContext.SaveChangesAsync();
+            computers!.Remove(pc);
+        }
+    }
+}

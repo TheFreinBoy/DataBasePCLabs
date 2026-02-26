@@ -1,0 +1,203 @@
+﻿@page "/computers/add"
+@using Microsoft.EntityFrameworkCore
+@using DBPCLabs.Models
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+
+<PageTitle>Додати комп'ютер</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="shadow-sm p-5" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                
+                <h3 class="fw-bold text-dark mb-4">Реєстрація нового комп'ютера</h3>
+                
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger rounded-3 d-flex align-items-center shadow-sm">
+                        <i class="bi bi-shield-x me-2 fs-4"></i>
+                        <div>
+                            <strong>Увага!</strong> @errorMessage
+                        </div>
+                    </div>
+                }
+
+                @if (laboratories == null)
+                {
+                    <div class="spinner-border text-primary" role="status"></div>
+                }
+                else
+                {
+                    <EditForm Model="@newPc" OnValidSubmit="SaveComputer">
+                        <DataAnnotationsValidator />
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Інвентарний номер (Автоматично):</label>
+
+                            <input type="text" value="@newPc.InventoryNumber" class="form-control form-control-lg bg-light text-muted fw-bold" disabled />
+                            <small class="text-secondary mt-1 d-block"><i class="bi bi-info-circle me-1"></i> Згенеровано системою автоматично.</small>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Процесор (Сімейство):</label>
+                                <select class="form-select form-select-lg bg-light" @bind="SelectedCpuFamily">
+                                    <option value="" disabled selected>-- Оберіть сімейство --</option>
+                                    @foreach (var family in cpuDictionary.Keys)
+                                    {
+                                        <option value="@family">@family</option>
+                                    }
+                                </select>
+                                <ValidationMessage For="@(() => newPc.Cpu)" class="text-danger small mt-1 fw-bold" />
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(SelectedCpuFamily) && cpuDictionary.ContainsKey(SelectedCpuFamily))
+                            {
+                                <div class="col-md-6 fade-in">
+                                    <label class="form-label fw-bold text-primary">Точна модель:</label>
+                                    <select class="form-select form-select-lg border-primary" @bind="ExactCpuModel">
+                                        <option value="" disabled selected>-- Оберіть модель --</option>
+                                        @foreach (var model in cpuDictionary[SelectedCpuFamily])
+                                        {
+                                            <option value="@model">@model</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Оперативна пам'ять (ГБ):</label>
+                               <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Оперативна пам'ять (ГБ):</label>
+                                <InputSelect @bind-Value="newPc.RamGb" class="form-select form-select-lg bg-light">
+                                    <option value="8">8 ГБ </option>
+                                    <option value="16">16 ГБ </option>
+                                    <option value="24">24 ГБ</option>
+                                    <option value="32">32 ГБ </option>
+                                    <option value="48">48 ГБ</option>
+                                    <option value="64">64 ГБ </option>
+                                    <option value="128">128 ГБ </option>
+                                    <option value="256">256 ГБ </option>
+                                </InputSelect>
+                                <ValidationMessage For="@(() => newPc.RamGb)" class="text-danger small mt-1 fw-bold" />
+                            </div>
+                                <ValidationMessage For="@(() => newPc.RamGb)" class="text-danger small mt-1 fw-bold" />
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Розташування (Аудиторія):</label>
+                                <InputSelect @bind-Value="newPc.LaboratoryId" class="form-select form-select-lg bg-light">
+                                    <option value="0" disabled selected>-- Оберіть аудиторію --</option>
+                                    @foreach (var lab in laboratories)
+                                    {
+                                        <option value="@lab.Id">@lab.Name (Ауд. @lab.RoomNumber)</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => newPc.LaboratoryId)" class="text-danger small mt-1 fw-bold" />
+                            </div>
+                        </div>
+
+                        <div class="mt-5 pt-3 border-top">
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 shadow-sm me-3 fw-bold">
+                                <i class="bi bi-check-lg me-1"></i> Зареєструвати ПК
+                            </button>
+                            <a href="/computers" class="btn btn-light text-secondary rounded-pill px-4 py-2 border">
+                                Скасувати
+                            </a>
+                        </div>
+                    </EditForm>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fade-in { animation: fadeIn 0.3s ease-in-out; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+@code {
+    private Computer newPc = new Computer { LaboratoryId = 0, RamGb = 8, Cpu = "" }; 
+    private List<Laboratory>? laboratories;
+    private string? errorMessage;
+
+    private Dictionary<string, List<string>> cpuDictionary = new()
+    {
+        { "Intel Core i3", new() { "10100F", "12100F", "13100F", "14100" } },
+        { "Intel Core i5", new() { "10400F", "11400F", "12400F", "13400F", "13600K" } },
+        { "Intel Core i7", new() { "10700K", "12700K", "13700K", "14700K" } },
+        { "Intel Core i9", new() { "12900K", "13900K", "14900K" } },
+        { "AMD Ryzen 3", new() { "3100", "3200G", "4100" } },
+        { "AMD Ryzen 5", new() { "3600", "4600G", "5500", "5600G", "5600X", "7600X" } },
+        { "AMD Ryzen 7", new() { "3700X", "5700X", "5800X3D", "7700X", "7800X3D" } },
+        { "AMD Ryzen 9", new() { "3900X", "5900X", "5950X", "7900X", "7950X3D" } },
+        { "Apple M1", new() { "Базова версія", "Pro", "Max", "Ultra" } },
+        { "Apple M2", new() { "Базова версія", "Pro", "Max", "Ultra" } },
+        { "Apple M3", new() { "Базова версія", "Pro", "Max" } },
+        { "Apple M4", new() { "Базова версія", "Pro", "Max" } },
+        { "Інший", new() { "Офісний ПК (Intel Pentium)", "Офісний ПК (AMD Athlon)", "Кастомна збірка" } }
+    };
+
+    private string _selectedCpuFamily = "";
+    private string SelectedCpuFamily 
+    {
+        get => _selectedCpuFamily;
+        set { _selectedCpuFamily = value; _exactCpuModel = ""; CombineCpuValues(); }
+    }
+
+    private string _exactCpuModel = "";
+    private string ExactCpuModel 
+    {
+        get => _exactCpuModel;
+        set { _exactCpuModel = value; CombineCpuValues(); }
+    }
+
+    private void CombineCpuValues()
+    {
+        if (string.IsNullOrEmpty(_exactCpuModel))
+            newPc.Cpu = ""; 
+        else if (_exactCpuModel == "Базова версія")
+            newPc.Cpu = _selectedCpuFamily;
+        else
+            newPc.Cpu = $"{_selectedCpuFamily} {_exactCpuModel}";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        laboratories = await DbContext.Laboratories.ToListAsync();
+        
+        var lastPc = await DbContext.Computers.OrderByDescending(c => c.Id).FirstOrDefaultAsync();
+        int nextId = (lastPc?.Id ?? 0) + 1;
+
+        newPc.InventoryNumber = $"INV-{DateTime.Now.Year}-{nextId:D4}";
+    }
+
+    private async Task SaveComputer()
+    {
+        errorMessage = null;
+        if (newPc.LaboratoryId == 0 || string.IsNullOrWhiteSpace(newPc.Cpu)) return;
+        
+        var selectedLab = await DbContext.Laboratories
+            .Include(l => l.Computers)
+            .FirstOrDefaultAsync(l => l.Id == newPc.LaboratoryId);
+
+        if (selectedLab != null)
+        {
+
+            if (selectedLab.Computers.Count >= selectedLab.Capacity)
+            {
+                errorMessage = $"Аудиторія {selectedLab.RoomNumber} переповнена! Максимальна місткість: {selectedLab.Capacity} ПК, і там вже стоїть {selectedLab.Computers.Count} системних блоків.";
+                return; 
+            }
+        }
+
+        DbContext.Computers.Add(newPc);
+        await DbContext.SaveChangesAsync();
+        Navigation.NavigateTo("/computers");
+    }
+}
