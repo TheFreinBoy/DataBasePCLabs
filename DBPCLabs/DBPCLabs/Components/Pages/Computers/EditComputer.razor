@@ -75,7 +75,16 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-dark">Оперативна пам'ять (ГБ):</label>
-                                <InputNumber @bind-Value="editPc.RamGb" class="form-control form-control-lg bg-light" />
+                                <InputSelect @bind-Value="editPc.RamGb" class="form-select form-select-lg bg-light">
+                                    <option value="8">8 ГБ </option>
+                                    <option value="16">16 ГБ </option>
+                                    <option value="24">24 ГБ</option>
+                                    <option value="32">32 ГБ </option>
+                                    <option value="48">48 ГБ</option>
+                                    <option value="64">64 ГБ </option>
+                                    <option value="128">128 ГБ </option>
+                                    <option value="256">256 ГБ </option>
+                                </InputSelect>
                                 <ValidationMessage For="@(() => editPc.RamGb)" class="text-danger small mt-1 fw-bold" />
                             </div>
                             

@@ -9,7 +9,7 @@
 <div class="container mt-5">
     
     <div class="mb-4">
-        <a href="/laboratories" class="btn btn-light text-secondary rounded-pill px-4 border shadow-sm">
+        <a href="/laboratories" class="btn btn-light text-secondary rounded-pill px-4 border shadow-sm fw-bold">
             <i class="bi bi-arrow-left me-2"></i> Назад до списку
         </a>
     </div>
@@ -24,43 +24,80 @@
     else
     {
         <div class="row">
-            <div class="col-md-5">
-                @* Картка з інформацією *@
+            <div class="col-md-5 mb-4">
                 <div class="shadow-sm p-5 h-100" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
                     
                     <div class="d-flex align-items-center mb-4">
                         <div class="bg-primary text-white rounded d-flex justify-content-center align-items-center me-3" style="width: 50px; height: 50px;">
-                            <i class="bi bi-pc-display" style="font-size: 1.5rem;"></i>
+                            <i class="bi bi-door-open" style="font-size: 1.5rem;"></i>
                         </div>
                         <h3 class="fw-bold text-dark m-0">@lab.Name</h3>
                     </div>
                     
-                    <hr />
+                    <hr class="text-muted" />
 
-                    <div class="mb-3 mt-4">
-                        <span class="text-muted d-block" style="font-size: 0.85rem; text-transform: uppercase;">Номер аудиторії</span>
-                        <span class="fw-bold text-dark fs-5">@lab.RoomNumber</span>
+                    <div class="mb-4 mt-4">
+                        <span class="text-muted d-block fw-bold mb-1" style="font-size: 0.80rem; text-transform: uppercase;">Номер аудиторії</span>
+                        <span class="badge bg-secondary fs-6 rounded-pill px-3 py-2">Ауд. @lab.RoomNumber</span>
                     </div>
 
-                    <div class="mb-3">
-                        <span class="text-muted d-block" style="font-size: 0.85rem; text-transform: uppercase;">Місткість (кількість ПК)</span>
-                        <span class="fw-bold text-dark fs-5">@lab.Capacity одиниць</span>
+                    <div class="mb-4">
+                        <span class="text-muted d-block fw-bold mb-1" style="font-size: 0.80rem; text-transform: uppercase;">Місткість (кількість ПК)</span>
+                        <span class="fw-bold text-dark fs-5">@lab.Capacity робочих місць</span>
                     </div>
                     
                     <div class="mb-3">
-                        <span class="text-muted d-block" style="font-size: 0.85rem; text-transform: uppercase;">Внутрішній ID в базі</span>
-                        <span class="text-secondary">#@lab.Id</span>
+                        <span class="text-muted d-block fw-bold mb-1" style="font-size: 0.80rem; text-transform: uppercase;">Внутрішній ID в базі</span>
+                        <span class="text-secondary fw-bold">#@lab.Id</span>
                     </div>
-
                 </div>
             </div>
             
-            <div class="col-md-7">
-                <div class="shadow-sm p-5 h-100 d-flex flex-column justify-content-center align-items-center text-center" style="background: #f8f9fa; border-radius: 12px; border: 1px dashed #ced4da;">
-                    <i class="bi bi-tools text-muted mb-3" style="font-size: 3rem;"></i>
-                    <h5 class="text-muted fw-bold">Список комп'ютерів</h5>
-                    <p class="text-secondary small">Тут згодом ми виведемо всі системні блоки, які закріплені за цією аудиторією.</p>
-                </div>
+            <div class="col-md-7 mb-4">
+                @if (lab.Computers == null || !lab.Computers.Any())
+                {
+                    <div class="shadow-sm p-5 h-100 d-flex flex-column justify-content-center align-items-center text-center" style="background: white; border-radius: 12px; border: 1px dashed #ced4da;">
+                        <i class="bi bi-pc-display text-muted mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted fw-bold">Комп'ютери відсутні</h5>
+                        <p class="text-secondary small">У цій лабораторії ще немає жодного зареєстрованого ПК.</p>
+                        <a href="/computers/add" class="btn btn-outline-primary mt-3 rounded-pill px-4 fw-bold">Додати ПК у базу</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="shadow-sm p-4 h-100" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                        <h5 class="fw-bold text-dark mb-4 border-bottom pb-3">
+                            <i class="bi bi-pc-display text-primary me-2"></i> Парк техніки в аудиторії (@lab.Computers.Count / @lab.Capacity)
+                        </h5>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover border-white mb-0">
+                                <thead class="text-secondary small text-uppercase fw-bold">
+                                    <tr>
+                                        <th class="py-2 border-0">Інв. номер</th>
+                                        <th class="py-2 border-0">Характеристики</th>
+                                        <th class="py-2 text-end border-0">Дії</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var pc in lab.Computers)
+                                    {
+                                        <tr>
+                                            <td class="align-middle fw-bold text-dark">@pc.InventoryNumber</td>
+                                            <td class="align-middle">
+                                                <span class="badge bg-secondary text-white me-1">@pc.Cpu</span>
+                                                <span class="badge border border-secondary text-secondary">@pc.RamGb ГБ</span>
+                                            </td>
+                                            <td class="text-end align-middle">
+                                                <a href="/computers/edit/@pc.Id" class="btn btn-sm btn-light text-success rounded-pill px-3 fw-bold border">Редагувати</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     }
@@ -74,6 +111,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        lab = await DbContext.Laboratories.FirstOrDefaultAsync(l => l.Id == Id);
+        lab = await DbContext.Laboratories
+            .Include(l => l.Computers)
+            .FirstOrDefaultAsync(l => l.Id == Id);
     }
 }

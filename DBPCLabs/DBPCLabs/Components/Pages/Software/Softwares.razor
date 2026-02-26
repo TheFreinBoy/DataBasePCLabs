@@ -1,0 +1,129 @@
+@page "/software"
+@using Microsoft.EntityFrameworkCore
+@using DBPCLabs.Models
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
+@inject IJSRuntime JS 
+
+<PageTitle>Програмне забезпечення</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark m-0">Програмне забезпечення</h2>
+        
+        <div class="d-flex gap-3 align-items-center">
+            
+            <div class="shadow-sm rounded-pill" style="background: white;">
+                <select class="form-select border-0 rounded-pill text-secondary fw-bold px-4 py-2" 
+                        style="cursor: pointer; min-width: 220px;"
+                        @onchange="SortChanged">
+                    <option value="id_desc">Спершу нові (за ID ↓)</option>
+                    <option value="id_asc">Спершу старі (за ID ↑)</option>
+                </select>
+            </div>
+
+            <a href="/software/add" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm fw-bold">
+                Додати програму
+            </a>
+        </div>
+    </div>
+
+    @if (softwares == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Завантаження бази програм...</p>
+        </div>
+    }
+    else if (!softwares.Any())
+    {
+        <div class="shadow-sm p-5 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <i class="bi bi-disc text-muted mb-3" style="font-size: 3rem;"></i>
+            <h4 class="text-muted">Жодної програми ще не додано</h4>
+            <a href="/software/add" class="btn btn-outline-primary mt-3 rounded-pill px-4">Зареєструвати першу програму</a>
+        </div>
+    }
+    else
+    {
+        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <div class="table-responsive">
+                <table class="table table-hover border-white mb-0">
+                    <thead class="text-secondary small text-uppercase fw-bold">
+                        <tr>
+                            <th class="py-3 border-0">ID</th>
+                            <th class="py-3 border-0">Назва</th>
+                            <th class="py-3 border-0">Версія</th>
+                            <th class="py-3 border-0">Ліцензія</th>
+                            <th class="py-3 border-0 text-end">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var soft in softwares)
+                        {
+                            <tr>
+                                <td class="align-middle text-muted fw-bold">#@soft.Id</td>
+                                <td class="align-middle fw-bold text-dark">@soft.Name</td>
+                                <td class="align-middle">
+                                    <span class="badge bg-secondary px-2 py-1 rounded-pill">@soft.Version</span>
+                                </td>
+                                <td class="align-middle">
+                                    @if (soft.LicenseType.Contains("Безкоштовна") || soft.LicenseType.Contains("Free"))
+                                    {
+                                        <span class="text-success fw-bold">@soft.LicenseType</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-warning fw-bold">@soft.LicenseType</span>
+                                    }
+                                </td>
+                                <td class="text-end align-middle">
+                                    <a href="/software/edit/@soft.Id" class="btn btn-sm btn-light text-success rounded-pill me-2 px-3 fw-bold border">Редагувати</a>
+                                    <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold border" @onclick="() => DeleteSoftware(soft)">Видалити</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Software>? softwares;
+    
+    private string currentSort = "id_desc";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    
+    private async Task LoadData()
+    {
+        var query = await DbContext.Softwares.ToListAsync();
+        
+        softwares = currentSort switch
+        {
+            "id_asc" => query.OrderBy(s => s.Id).ToList(),
+            _ => query.OrderByDescending(s => s.Id).ToList() 
+        };
+    }
+    
+    private async Task SortChanged(ChangeEventArgs e)
+    {
+        currentSort = e.Value?.ToString() ?? "id_desc";
+        await LoadData(); 
+    }
+
+    private async Task DeleteSoftware(Software soft)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Видалити програму {soft.Name}?");
+        if (confirmed)
+        {
+            DbContext.Softwares.Remove(soft);
+            await DbContext.SaveChangesAsync();
+            await LoadData(); 
+        }
+    }
+}

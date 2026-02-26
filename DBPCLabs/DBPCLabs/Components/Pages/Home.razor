@@ -1,6 +1,67 @@
 ﻿@page "/"
+@using Microsoft.EntityFrameworkCore
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Головна - UniLab Manager</PageTitle>
 
-<h1>Заглушка</h1>
+<div class="container mt-5 pt-3">
+    <div class="text-center mb-5 pb-3">
+        <h1 class="fw-bold text-dark display-5 mb-3">
+            Вітаємо у <span class="text-primary">UniLab Manager</span>
+        </h1>
+        <p class="text-muted fs-5">
+            Єдина система управління комп'ютерними лабораторіями, парком техніки та програмним забезпеченням.
+        </p>
+    </div>
+    
+    <div class="row g-4 mt-2 justify-content-center">
+        
+        <div class="col-md-4">
+            <div class="shadow-sm p-4 h-100 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                    <i class="bi bi-door-open fs-2"></i>
+                </div>
+                <h2 class="fw-bold text-dark display-6 m-0">@labsCount</h2>
+                <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold" style="letter-spacing: 1px;">Лабораторій</h6>
+                <a href="/laboratories" class="btn btn-outline-primary rounded-pill px-4 fw-bold">Управління</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="shadow-sm p-4 h-100 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                    <i class="bi bi-pc-display fs-2"></i>
+                </div>
+                <h2 class="fw-bold text-dark display-6 m-0">@pcsCount</h2>
+                <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold" style="letter-spacing: 1px;">Комп'ютерів</h6>
+                <a href="/computers" class="btn btn-outline-success rounded-pill px-4 fw-bold">Інвентаризація</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="shadow-sm p-4 h-100 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                    <i class="bi bi-disc fs-2"></i>
+                </div>
+                <h2 class="fw-bold text-dark display-6 m-0">@softCount</h2>
+                <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold" style="letter-spacing: 1px;">Програмного ПЗ</h6>
+                <a href="/software" class="btn btn-outline-warning rounded-pill px-4 fw-bold text-dark">Каталог ПЗ</a>
+            </div>
+        </div>
 
+    </div>
+</div>
+
+@code {
+    private int labsCount = 0;
+    private int pcsCount = 0;
+    private int softCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        labsCount = await DbContext.Laboratories.CountAsync();
+        pcsCount = await DbContext.Computers.CountAsync();
+        softCount = await DbContext.Softwares.CountAsync();
+    }
+}

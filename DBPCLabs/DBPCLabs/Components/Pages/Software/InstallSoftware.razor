@@ -1,0 +1,142 @@
+@page "/computers/{id:int}/software"
+@using Microsoft.EntityFrameworkCore
+@using DBPCLabs.Models
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Встановлення ПЗ</PageTitle>
+
+<div class="container mt-4">
+    @if (computer == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Завантаження...</p>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark m-0">Встановлення ПЗ</h2>
+                <p class="text-muted mb-0 mt-1">
+                    ПК: <strong class="text-primary px-2 py-1 bg-light rounded border">@computer.InventoryNumber</strong> 
+                    (@computer.Cpu, @computer.RamGb ГБ)
+                </p>
+            </div>
+            <a href="/computers" class="btn btn-light rounded-pill px-4 shadow-sm border fw-bold">
+                Назад до списку
+            </a>
+        </div>
+
+        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <h5 class="fw-bold mb-4 border-bottom pb-3 text-dark">
+                <i class="bi bi-check2-square text-success me-2"></i> Виберіть програми для встановлення:
+            </h5>
+
+            @if (allSoftware == null || !allSoftware.Any())
+            {
+                <div class="text-center p-4">
+                    <p class="text-muted mb-0">У базі немає жодної програми. Спочатку додайте ПЗ у відповідному розділі.</p>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var soft in allSoftware)
+                    {
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="form-check form-switch p-3 border rounded-3 transition-all @(selectedSoftwareIds.Contains(soft.Id) ? "bg-light border-primary shadow-sm" : "")" 
+                                 style="cursor: pointer; transition: 0.2s;" 
+                                 @onclick="() => ToggleSoftware(soft.Id)">
+                                
+                                <input class="form-check-input ms-0 me-3 mt-2" type="checkbox" role="switch"
+                                       checked="@selectedSoftwareIds.Contains(soft.Id)"
+                                       style="transform: scale(1.4); cursor: pointer;"
+                                       @onclick:stopPropagation="true"
+                                       @onchange="() => ToggleSoftware(soft.Id)">
+                                       
+                                <label class="form-check-label w-100" style="cursor: pointer;" @onclick:stopPropagation="true">
+                                    <strong class="d-block text-dark mb-1">@soft.Name</strong>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-secondary">@soft.Version</span>
+                                        <small class="text-muted">@soft.LicenseType</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="mt-4 pt-3 border-top text-end">
+                    <button class="btn btn-success rounded-pill px-5 py-2 shadow-sm fw-bold" @onclick="SaveChanges">
+                        <i class="bi bi-save me-2"></i> Зберегти зміни
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Computer? computer;
+    private List<Software> allSoftware = new();
+    
+    private HashSet<int> selectedSoftwareIds = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        computer = await DbContext.Computers
+            .Include(c => c.InstalledSoftware)
+            .FirstOrDefaultAsync(c => c.Id == Id);
+
+        if (computer == null)
+        {
+            Navigation.NavigateTo("/computers");
+            return;
+        }
+        
+        allSoftware = await DbContext.Softwares.ToListAsync();
+        
+        foreach (var soft in computer.InstalledSoftware)
+        {
+            selectedSoftwareIds.Add(soft.Id);
+        }
+    }
+
+    private void ToggleSoftware(int softwareId)
+    {
+        if (selectedSoftwareIds.Contains(softwareId))
+        {
+            selectedSoftwareIds.Remove(softwareId);
+        }
+        else
+        {
+            selectedSoftwareIds.Add(softwareId);
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+        computer!.InstalledSoftware.Clear();
+        
+        var selectedSoftware = await DbContext.Softwares
+            .Where(s => selectedSoftwareIds.Contains(s.Id))
+            .ToListAsync();
+        
+        foreach (var soft in selectedSoftware)
+        {
+            computer.InstalledSoftware.Add(soft);
+        }
+        
+        await DbContext.SaveChangesAsync();
+        
+        await JS.InvokeVoidAsync("alert", "Список встановленого ПЗ успішно оновлено!");
+        Navigation.NavigateTo("/computers");
+    }
+}

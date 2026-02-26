@@ -1,0 +1,122 @@
+@page "/software/add"
+@using Microsoft.EntityFrameworkCore
+@using DBPCLabs.Models
+@using DBPCLabs.Data
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+
+<PageTitle>Додати програмне забезпечення</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="shadow-sm p-5" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+                
+                <h3 class="fw-bold text-dark mb-4">Реєстрація нової програми</h3>
+                
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger rounded-3 d-flex align-items-center shadow-sm">
+                        <i class="bi bi-shield-x me-2 fs-4"></i>
+                        <div>
+                            <strong>Помилка збереження!</strong> @errorMessage
+                        </div>
+                    </div>
+                }
+
+                <EditForm Model="@newSoftware" OnValidSubmit="SaveSoftware">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">Назва програми:</label>
+                        <InputSelect @bind-Value="newSoftware.Name" class="form-select form-select-lg bg-light">
+                            <option value="" disabled selected>-- Оберіть програму зі списку --</option>
+                            <option value="Microsoft Office">Microsoft Office</option>
+                            <option value="Visual Studio">Visual Studio</option>
+                            <option value="Visual Studio Code">Visual Studio Code</option>
+                            <option value="AutoCAD">AutoCAD</option>
+                            <option value="Adobe Photoshop">Adobe Photoshop</option>
+                            <option value="IntelliJ IDEA">IntelliJ IDEA</option>
+                            <option value="SQL Server Management Studio">SQL Server Management Studio (SSMS)</option>
+                            <option value="Docker Desktop">Docker Desktop</option>
+                            <option value="PostgreSQL">PostgreSQL</option>
+                            <option value="Unity">Unity</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => newSoftware.Name)" class="text-danger small mt-1 fw-bold" />
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark">Версія:</label>
+                            <InputSelect @bind-Value="newSoftware.Version" class="form-select form-select-lg bg-light">
+                                <option value="" disabled selected>-- Оберіть версію --</option>
+                                <option value="2019">2019</option>
+                                <option value="2022">2022</option>
+                                <option value="2024">2024</option>
+                                <option value="Остання (Latest)">Остання (Latest)</option>
+                                <option value="Community">Community</option>
+                                <option value="Professional">Professional</option>
+                                <option value="Enterprise">Enterprise</option>
+                                <option value="v1.0">v1.0</option>
+                                <option value="v2.0">v2.0</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => newSoftware.Version)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark">Тип ліцензії:</label>
+                            <InputSelect @bind-Value="newSoftware.LicenseType" class="form-select form-select-lg bg-light">
+                                <option value="" disabled selected>-- Оберіть ліцензію --</option>
+                                <option value="Безкоштовна (Free/Open Source)">Безкоштовна (Free/Open Source)</option>
+                                <option value="Комерційна (Paid)">Комерційна (Paid)</option>
+                                <option value="Студентська (Educational)">Студентська (Educational)</option>
+                                <option value="Тріальна (Trial)">Тріальна (Trial)</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => newSoftware.LicenseType)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+                    </div>
+
+                    <div class="mt-5 pt-3 border-top">
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 shadow-sm me-3 fw-bold">
+                            Зберегти програму
+                        </button>
+                        <a href="/software" class="btn btn-light text-secondary rounded-pill px-4 py-2 border fw-bold">
+                            Скасувати
+                        </a>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Software newSoftware = new Software { Name = "", Version = "", LicenseType = "" };
+    private string? errorMessage;
+
+    private async Task SaveSoftware()
+    {
+        errorMessage = null;
+        
+        if (string.IsNullOrWhiteSpace(newSoftware.Name) || 
+            string.IsNullOrWhiteSpace(newSoftware.Version) || 
+            string.IsNullOrWhiteSpace(newSoftware.LicenseType))
+        {
+            errorMessage = "Будь ласка, оберіть значення для всіх полів зі списків.";
+            return;
+        }
+        
+        bool isDuplicate = await DbContext.Softwares
+            .AnyAsync(s => s.Name == newSoftware.Name && s.Version == newSoftware.Version);
+
+        if (isDuplicate)
+        {
+            errorMessage = $"Програма '{newSoftware.Name}' версії '{newSoftware.Version}' вже існує в базі!";
+            return;
+        }
+
+        DbContext.Softwares.Add(newSoftware);
+        await DbContext.SaveChangesAsync();
+        Navigation.NavigateTo("/software");
+    }
+}
