@@ -1,8 +1,8 @@
 ﻿@page "/computers/edit/{Id:int}"
-@using Microsoft.EntityFrameworkCore
 @using DBPCLabs.Models
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Repositories
+@inject ComputerRepository ComputerRepo
+@inject LaboratoryRepository LabRepo
 @inject NavigationManager Navigation
 
 <PageTitle>Редагування комп'ютера</PageTitle>
@@ -175,8 +175,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        laboratories = await DbContext.Laboratories.ToListAsync();
-        editPc = await DbContext.Computers.FindAsync(Id);
+        laboratories = await LabRepo.GetAllAsync();
+        
+        editPc = await ComputerRepo.GetByIdAsync(Id);
 
         if (editPc != null)
         {
@@ -205,20 +206,23 @@
         errorMessage = null;
         if (string.IsNullOrWhiteSpace(editPc!.Cpu)) return;
         
-        if (editPc.LaboratoryId != originalLaboratoryId)
+        if (editPc.LaboratoryId != originalLaboratoryId && editPc.LaboratoryId != 0)
         {
-            var targetLab = await DbContext.Laboratories.FindAsync(editPc.LaboratoryId);
+            var targetLab = await LabRepo.GetByIdAsync(editPc.LaboratoryId);
             
-            int computersInTargetLab = await DbContext.Computers.CountAsync(c => c.LaboratoryId == editPc.LaboratoryId);
-
-            if (targetLab != null && computersInTargetLab >= targetLab.Capacity)
+            if (targetLab != null)
             {
-                errorMessage = $"Неможливо перенести комп'ютер. Аудиторія {targetLab.RoomNumber} переповнена! Максимальна місткість: {targetLab.Capacity} ПК.";
-                return; 
+                int computersInTargetLab = await ComputerRepo.CountComputersInLabAsync(targetLab.Id);
+
+                if (computersInTargetLab >= targetLab.Capacity)
+                {
+                    errorMessage = $"Неможливо перенести комп'ютер. Аудиторія {targetLab.RoomNumber} переповнена! Максимальна місткість: {targetLab.Capacity} ПК.";
+                    return; 
+                }
             }
         }
-
-        await DbContext.SaveChangesAsync();
+        
+        await ComputerRepo.UpdateAsync(editPc);
         Navigation.NavigateTo("/computers");
     }
 }

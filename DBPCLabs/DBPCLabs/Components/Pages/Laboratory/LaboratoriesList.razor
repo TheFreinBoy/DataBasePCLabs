@@ -1,8 +1,7 @@
 @page "/laboratories"
-@using Microsoft.EntityFrameworkCore
 @using DBPCLabs.Models
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Repositories
+@inject LaboratoryRepository LabRepo
 
 @inject IJSRuntime JS 
 
@@ -74,17 +73,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        laboratories = await DbContext.Laboratories.ToListAsync();
+        laboratories = await LabRepo.GetAllAsync();
     }
-    
+
     private async Task DeleteLaboratory(Laboratory lab)
     {
-        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Ви дійсно хочете видалити '{lab.Name}'?\nУсі дані буде втрачено.");
-        
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Видалити лабораторію {lab.Name}?");
         if (confirmed)
         {
-            DbContext.Laboratories.Remove(lab);
-            await DbContext.SaveChangesAsync();
+            await LabRepo.DeleteAsync(lab.Id);
             
             laboratories!.Remove(lab);
         }

@@ -1,8 +1,8 @@
 @page "/software"
 @using Microsoft.EntityFrameworkCore
 @using DBPCLabs.Models
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Repositories
+@inject SoftwareRepository SoftwareRepo
 @inject IJSRuntime JS 
 
 <PageTitle>Програмне забезпечення</PageTitle>
@@ -91,25 +91,18 @@
 
 @code {
     private List<Software>? softwares;
-    
     private string currentSort = "id_desc";
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
     }
-    
+
     private async Task LoadData()
     {
-        var query = await DbContext.Softwares.ToListAsync();
-        
-        softwares = currentSort switch
-        {
-            "id_asc" => query.OrderBy(s => s.Id).ToList(),
-            _ => query.OrderByDescending(s => s.Id).ToList() 
-        };
+        softwares = await SoftwareRepo.GetAllAsync(currentSort);
     }
-    
+
     private async Task SortChanged(ChangeEventArgs e)
     {
         currentSort = e.Value?.ToString() ?? "id_desc";
@@ -121,8 +114,7 @@
         bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Видалити програму {soft.Name}?");
         if (confirmed)
         {
-            DbContext.Softwares.Remove(soft);
-            await DbContext.SaveChangesAsync();
+            await SoftwareRepo.DeleteAsync(soft.Id);
             await LoadData(); 
         }
     }

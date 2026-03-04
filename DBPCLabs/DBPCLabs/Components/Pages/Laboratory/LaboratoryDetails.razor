@@ -1,8 +1,7 @@
 @page "/laboratories/details/{Id:int}"
-@using Microsoft.EntityFrameworkCore
 @using DBPCLabs.Models
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Repositories
+@inject LaboratoryRepository LabRepo
 
 <PageTitle>Деталі лабораторії</PageTitle>
 
@@ -111,8 +110,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        lab = await DbContext.Laboratories
-            .Include(l => l.Computers)
-            .FirstOrDefaultAsync(l => l.Id == Id);
+        lab = await LabRepo.GetByIdWithComputersAsync(Id);
     }
 }

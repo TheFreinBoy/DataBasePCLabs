@@ -1,8 +1,8 @@
 @page "/software/add"
 @using Microsoft.EntityFrameworkCore
 @using DBPCLabs.Models
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Repositories
+@inject SoftwareRepository SoftwareRepo
 @inject NavigationManager Navigation
 
 <PageTitle>Додати програмне забезпечення</PageTitle>
@@ -97,7 +97,7 @@
     private async Task SaveSoftware()
     {
         errorMessage = null;
-        
+
         if (string.IsNullOrWhiteSpace(newSoftware.Name) || 
             string.IsNullOrWhiteSpace(newSoftware.Version) || 
             string.IsNullOrWhiteSpace(newSoftware.LicenseType))
@@ -106,17 +106,15 @@
             return;
         }
         
-        bool isDuplicate = await DbContext.Softwares
-            .AnyAsync(s => s.Name == newSoftware.Name && s.Version == newSoftware.Version);
+        bool isDuplicate = await SoftwareRepo.IsDuplicateAsync(newSoftware.Name, newSoftware.Version);
 
         if (isDuplicate)
         {
             errorMessage = $"Програма '{newSoftware.Name}' версії '{newSoftware.Version}' вже існує в базі!";
             return;
         }
-
-        DbContext.Softwares.Add(newSoftware);
-        await DbContext.SaveChangesAsync();
+        
+        await SoftwareRepo.AddAsync(newSoftware);
         Navigation.NavigateTo("/software");
     }
 }

@@ -1,8 +1,7 @@
 ﻿@page "/computers"
-@using Microsoft.EntityFrameworkCore
 @using DBPCLabs.Models
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Repositories
+@inject ComputerRepository ComputerRepo
 @inject IJSRuntime JS 
 
 <PageTitle>Управління технікою</PageTitle>
@@ -109,11 +108,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-   
-        computers = await DbContext.Computers
-            .Include(c => c.Laboratory) 
-            .Include(c => c.InstalledSoftware)
-            .ToListAsync();
+        computers = await ComputerRepo.GetAllAsync();
     }
 
     private async Task DeleteComputer(Computer pc)
@@ -121,8 +116,7 @@
         bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Видалити комп'ютер з інвентарним номером {pc.InventoryNumber}?");
         if (confirmed)
         {
-            DbContext.Computers.Remove(pc);
-            await DbContext.SaveChangesAsync();
+            await ComputerRepo.DeleteAsync(pc.Id);
             computers!.Remove(pc);
         }
     }

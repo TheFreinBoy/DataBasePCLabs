@@ -1,8 +1,8 @@
 ﻿@page "/computers/add"
-@using Microsoft.EntityFrameworkCore
 @using DBPCLabs.Models
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Repositories
+@inject ComputerRepository ComputerRepo
+@inject LaboratoryRepository LabRepo
 @inject NavigationManager Navigation
 
 <PageTitle>Додати комп'ютер</PageTitle>
@@ -168,11 +168,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        laboratories = await DbContext.Laboratories.ToListAsync();
+        laboratories = await LabRepo.GetAllAsync();
         
-        var lastPc = await DbContext.Computers.OrderByDescending(c => c.Id).FirstOrDefaultAsync();
-        int nextId = (lastPc?.Id ?? 0) + 1;
-
+        int nextId = await ComputerRepo.GetMaxIdAsync() + 1;
         newPc.InventoryNumber = $"INV-{DateTime.Now.Year}-{nextId:D4}";
     }
 
@@ -181,22 +179,18 @@
         errorMessage = null;
         if (newPc.LaboratoryId == 0 || string.IsNullOrWhiteSpace(newPc.Cpu)) return;
         
-        var selectedLab = await DbContext.Laboratories
-            .Include(l => l.Computers)
-            .FirstOrDefaultAsync(l => l.Id == newPc.LaboratoryId);
+        var selectedLab = await LabRepo.GetByIdWithComputersAsync(newPc.LaboratoryId);
 
         if (selectedLab != null)
         {
-
             if (selectedLab.Computers.Count >= selectedLab.Capacity)
             {
                 errorMessage = $"Аудиторія {selectedLab.RoomNumber} переповнена! Максимальна місткість: {selectedLab.Capacity} ПК, і там вже стоїть {selectedLab.Computers.Count} системних блоків.";
                 return; 
             }
         }
-
-        DbContext.Computers.Add(newPc);
-        await DbContext.SaveChangesAsync();
+        
+        await ComputerRepo.AddAsync(newPc);
         Navigation.NavigateTo("/computers");
     }
 }

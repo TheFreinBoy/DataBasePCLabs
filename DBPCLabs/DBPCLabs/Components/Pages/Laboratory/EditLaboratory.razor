@@ -1,8 +1,6 @@
 ﻿@page "/laboratories/edit/{Id:int}"
-@using Microsoft.EntityFrameworkCore
-@using DBPCLabs.Models
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Models@using DBPCLabs.Repositories
+@inject LaboratoryRepository LabRepo
 @inject NavigationManager Navigation
 
 <PageTitle>Редагування лабораторії</PageTitle>
@@ -11,7 +9,7 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             
-            @if (editLab == null)
+            @if (lab == null)
             {
                 <div class="text-center mt-5">
                     <div class="spinner-border text-primary" role="status"></div>
@@ -23,29 +21,29 @@
                 <div class="shadow-sm p-5" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
                     
                     <h3 class="fw-bold text-dark mb-4">
-                        <i class="bi bi-pencil-square text-warning me-2"></i> Редагування: @editLab.Name
+                        <i class="bi bi-pencil-square text-warning me-2"></i> Редагування: @lab.Name
                     </h3>
                     
-                    <EditForm Model="@editLab" OnValidSubmit="UpdateLaboratory">
+                    <EditForm Model="@lab" OnValidSubmit="UpdateLaboratory">
                         
                         <DataAnnotationsValidator />
                         
                         <div class="mb-4">
                             <label class="form-label fw-bold text-dark">Назва лабораторії:</label>
-                            <InputText @bind-Value="editLab.Name" class="form-control form-control-lg bg-light" />
-                            <ValidationMessage For="@(() => editLab.Name)" class="text-danger small mt-1 fw-bold" />
+                            <InputText @bind-Value="lab.Name" class="form-control form-control-lg bg-light" />
+                            <ValidationMessage For="@(() => lab.Name)" class="text-danger small mt-1 fw-bold" />
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label fw-bold text-dark">Номер аудиторії (лише цифри):</label>
-                            <InputText @bind-Value="editLab.RoomNumber" class="form-control form-control-lg bg-light" />
-                            <ValidationMessage For="@(() => editLab.RoomNumber)" class="text-danger small mt-1 fw-bold" />
+                            <InputText @bind-Value="lab.RoomNumber" class="form-control form-control-lg bg-light" />
+                            <ValidationMessage For="@(() => lab.RoomNumber)" class="text-danger small mt-1 fw-bold" />
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label fw-bold text-dark">Місткість (кількість ПК):</label>
-                            <InputNumber @bind-Value="editLab.Capacity" class="form-control form-control-lg bg-light" />
-                            <ValidationMessage For="@(() => editLab.Capacity)" class="text-danger small mt-1 fw-bold" />
+                            <InputNumber @bind-Value="lab.Capacity" class="form-control form-control-lg bg-light" />
+                            <ValidationMessage For="@(() => lab.Capacity)" class="text-danger small mt-1 fw-bold" />
                         </div>
 
                         <div class="mt-5 pt-2 border-top">
@@ -68,17 +66,21 @@
     [Parameter]
     public int Id { get; set; }
 
-    private Laboratory? editLab;
+    private Laboratory? lab;
 
     protected override async Task OnInitializedAsync()
     {
-        editLab = await DbContext.Laboratories.FindAsync(Id);
+        lab = await LabRepo.GetByIdAsync(Id);
+
+        if (lab == null)
+        {
+            Navigation.NavigateTo("/laboratories");
+        }
     }
 
     private async Task UpdateLaboratory()
     {
-        await DbContext.SaveChangesAsync();
-        
+        await LabRepo.UpdateAsync(lab!);
         Navigation.NavigateTo("/laboratories");
     }
 }

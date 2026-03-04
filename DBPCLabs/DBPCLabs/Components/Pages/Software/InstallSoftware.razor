@@ -1,8 +1,9 @@
 @page "/computers/{id:int}/software"
 @using Microsoft.EntityFrameworkCore
 @using DBPCLabs.Models
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Repositories
+@inject ComputerRepository ComputerRepo
+@inject SoftwareRepository SoftwareRepo
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -91,9 +92,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        computer = await DbContext.Computers
-            .Include(c => c.InstalledSoftware)
-            .FirstOrDefaultAsync(c => c.Id == Id);
+        computer = await ComputerRepo.GetByIdAsync(Id);
 
         if (computer == null)
         {
@@ -101,11 +100,12 @@
             return;
         }
         
-        allSoftware = await DbContext.Softwares.ToListAsync();
+        allSoftware = await SoftwareRepo.GetAllAsync();
         
-        foreach (var soft in computer.InstalledSoftware)
+        var installedIds = await ComputerRepo.GetInstalledSoftwareIdsAsync(Id);
+        foreach (var softId in installedIds)
         {
-            selectedSoftwareIds.Add(soft.Id);
+            selectedSoftwareIds.Add(softId);
         }
     }
 
@@ -123,18 +123,7 @@
 
     private async Task SaveChanges()
     {
-        computer!.InstalledSoftware.Clear();
-        
-        var selectedSoftware = await DbContext.Softwares
-            .Where(s => selectedSoftwareIds.Contains(s.Id))
-            .ToListAsync();
-        
-        foreach (var soft in selectedSoftware)
-        {
-            computer.InstalledSoftware.Add(soft);
-        }
-        
-        await DbContext.SaveChangesAsync();
+        await ComputerRepo.UpdateInstalledSoftwareAsync(Id, selectedSoftwareIds);
         
         await JS.InvokeVoidAsync("alert", "Список встановленого ПЗ успішно оновлено!");
         Navigation.NavigateTo("/computers");

@@ -1,8 +1,8 @@
 @page "/software/edit/{id:int}"
 @using Microsoft.EntityFrameworkCore
 @using DBPCLabs.Models
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Repositories
+@inject SoftwareRepository SoftwareRepo
 @inject NavigationManager Navigation
 
 <PageTitle>Редагування програми</PageTitle>
@@ -110,7 +110,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        softwareToEdit = await DbContext.Softwares.FindAsync(Id);
+        softwareToEdit = await SoftwareRepo.GetByIdAsync(Id);
 
         if (softwareToEdit == null)
         {
@@ -130,10 +130,7 @@
             return;
         }
         
-        bool isDuplicate = await DbContext.Softwares
-            .AnyAsync(s => s.Name == softwareToEdit.Name 
-                        && s.Version == softwareToEdit.Version 
-                        && s.Id != softwareToEdit.Id); 
+        bool isDuplicate = await SoftwareRepo.IsDuplicateAsync(softwareToEdit.Name, softwareToEdit.Version, softwareToEdit.Id);
 
         if (isDuplicate)
         {
@@ -141,8 +138,7 @@
             return;
         }
         
-        DbContext.Softwares.Update(softwareToEdit);
-        await DbContext.SaveChangesAsync();
+        await SoftwareRepo.UpdateAsync(softwareToEdit);
         Navigation.NavigateTo("/software");
     }
 }
