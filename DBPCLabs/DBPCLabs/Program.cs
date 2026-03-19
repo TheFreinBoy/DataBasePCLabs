@@ -1,12 +1,8 @@
 using DBPCLabs.Components;
-using Microsoft.EntityFrameworkCore;
-using DBPCLabs.Data; 
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// PostgreSQL
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Repositories
 builder.Services.AddScoped<DBPCLabs.Repositories.LaboratoryRepository>();
 builder.Services.AddScoped<DBPCLabs.Repositories.ComputerRepository>();

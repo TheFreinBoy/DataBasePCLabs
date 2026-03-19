@@ -1,57 +1,171 @@
 ﻿@page "/"
-@using Microsoft.EntityFrameworkCore
-@using DBPCLabs.Data
-@inject AppDbContext DbContext
+@using DBPCLabs.Repositories
+@inject LaboratoryRepository LabRepo
+@inject ComputerRepository ComputerRepo
+@inject SoftwareRepository SoftwareRepo
+@inject IJSRuntime JS
 
-<PageTitle>Головна - UniLab Manager</PageTitle>
+<PageTitle>UniLab Manager — Головна</PageTitle>
 
-<div class="container mt-5 pt-3">
-    <div class="text-center mb-5 pb-3">
-        <h1 class="fw-bold text-dark display-5 mb-3">
-            Вітаємо у <span class="text-primary">UniLab Manager</span>
+<div class="hero-section text-center d-flex align-items-center justify-content-center">
+    <div class="container py-5 fade-in-up">
+        
+        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle text-uppercase rounded-pill px-4 py-2 mb-4 fw-bold shadow-sm">
+            <i class="bi bi-stars me-1"></i> Система управління лабораторіями
+        </span>
+        
+        <h1 class="fw-bold display-3 mb-4 mt-2 text-dark" style="line-height: 1.15; letter-spacing: -1px;">
+            Модернізуйте свою<br /> <span class="text-primary">комп'ютерну лабораторію</span>
         </h1>
-        <p class="text-muted fs-5">
-            Єдина система управління комп'ютерними лабораторіями, парком техніки та програмним забезпеченням.
+        
+        <p class="text-secondary fs-5 mx-auto mb-5" style="max-width: 650px; line-height: 1.6;">
+            UniLab Manager розроблено спеціально для університетів та освітніх центрів. 
+            Наша мета — спростити рутинні процеси інвентаризації, забезпечити контроль за використанням ПЗ та створити сучасне цифрове середовище.
         </p>
-    </div>
-    
-    <div class="row g-4 mt-2 justify-content-center">
         
-        <div class="col-md-4">
-            <div class="shadow-sm p-4 h-100 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
-                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 70px; height: 70px;">
-                    <i class="bi bi-door-open fs-2"></i>
-                </div>
-                <h2 class="fw-bold text-dark display-6 m-0">@labsCount</h2>
-                <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold" style="letter-spacing: 1px;">Лабораторій</h6>
-                <a href="/laboratories" class="btn btn-outline-primary rounded-pill px-4 fw-bold">Управління</a>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="shadow-sm p-4 h-100 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
-                <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 70px; height: 70px;">
-                    <i class="bi bi-pc-display fs-2"></i>
-                </div>
-                <h2 class="fw-bold text-dark display-6 m-0">@pcsCount</h2>
-                <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold" style="letter-spacing: 1px;">Комп'ютерів</h6>
-                <a href="/computers" class="btn btn-outline-success rounded-pill px-4 fw-bold">Інвентаризація</a>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="shadow-sm p-4 h-100 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
-                <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 70px; height: 70px;">
-                    <i class="bi bi-disc fs-2"></i>
-                </div>
-                <h2 class="fw-bold text-dark display-6 m-0">@softCount</h2>
-                <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold" style="letter-spacing: 1px;">Програмного ПЗ</h6>
-                <a href="/software" class="btn btn-outline-warning rounded-pill px-4 fw-bold text-dark">Каталог ПЗ</a>
-            </div>
-        </div>
-
+        <a href="#quick-access" class="btn btn-primary rounded-pill btn-lg px-5 py-3 fw-bold shadow mt-2 transition-all hover-lift">
+            <i class="bi bi-chevron-double-down me-2"></i> Почати роботу
+        </a>
     </div>
 </div>
+
+<div id="quick-access" class="cards-section container-fluid bg-white">
+    <div class="container">
+        <div class="text-center mb-5 pb-2">
+            <h2 class="fw-bold text-dark display-6 mb-3">Швидкий доступ до розділів</h2>
+            <p class="text-muted fs-5">Ключові показники вашої інфраструктури в реальному часі</p>
+        </div>
+
+        <div class="row g-4 justify-content-center animate-on-scroll">
+            
+            <div class="col-md-4 card-animate-item-1">
+                <div class="dashboard-card shadow-sm p-5 h-100 text-center bg-white">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle icon-container mx-auto mb-4">
+                        <i class="bi bi-door-open fs-1"></i>
+                    </div>
+                    <h2 class="fw-bold text-dark display-4 m-0 mb-1">@labsCount</h2>
+                    <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold tracking-wide">Лабораторій</h6>
+                    <a href="/laboratories" class="btn btn-light text-primary border rounded-pill px-4 py-2 fw-bold w-100 mt-3 hover-btn">Управління</a>
+                </div>
+            </div>
+            
+            <div class="col-md-4 card-animate-item-2">
+                <div class="dashboard-card shadow-sm p-5 h-100 text-center bg-white">
+                    <div class="bg-success bg-opacity-10 text-success rounded-circle icon-container mx-auto mb-4">
+                        <i class="bi bi-pc-display fs-1"></i>
+                    </div>
+                    <h2 class="fw-bold text-dark display-4 m-0 mb-1">@pcsCount</h2>
+                    <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold tracking-wide">Комп'ютерів</h6>
+                    <a href="/computers" class="btn btn-light text-success border rounded-pill px-4 py-2 fw-bold w-100 mt-3 hover-btn">Інвентаризація</a>
+                </div>
+            </div>
+            
+            <div class="col-md-4 card-animate-item-3">
+                <div class="dashboard-card shadow-sm p-5 h-100 text-center bg-white">
+                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle icon-container mx-auto mb-4">
+                        <i class="bi bi-disc fs-1"></i>
+                    </div>
+                    <h2 class="fw-bold text-dark display-4 m-0 mb-1">@softCount</h2>
+                    <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold tracking-wide">Програмного ПЗ</h6>
+                    <a href="/software" class="btn btn-light text-warning border rounded-pill px-4 py-2 fw-bold text-dark w-100 mt-3 hover-btn">Каталог ПЗ</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Світлий і чистий блок Героя */
+    .hero-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #eef2f7 100%);
+        background-image: radial-gradient(#dee2e6 1px, transparent 1px);
+        background-size: 30px 30px;
+        min-height: 90vh; /* Трохи збільшили висоту, щоб точно закрити екран */
+        border-bottom-left-radius: 50px;
+        border-bottom-right-radius: 50px;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+    }
+
+    /* === СЕКЦІЯ З КАРТКАМИ (МАГІЯ ЦЕНТРУВАННЯ) === */
+    .cards-section {
+        min-height: 100vh; /* Висота рівно на 1 екран */
+        display: flex; /* Робимо гнучкий контейнер */
+        flex-direction: column;
+        justify-content: center; /* Центруємо весь вміст по вертикалі! */
+        padding-top: 2rem;
+        padding-bottom: 5rem;
+    }
+
+    /* Великі іконки */
+    .icon-container {
+        width: 85px; 
+        height: 85px; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* Ефекти карток */
+    .dashboard-card {
+        border-radius: 24px;
+        border: 1px solid #edf0f5;
+        transition: all 0.4s ease;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important;
+        border-color: #e2e8f0;
+    }
+
+    .dashboard-card:hover .icon-container {
+        transform: scale(1.15) rotate(5deg);
+    }
+
+    .tracking-wide {
+        letter-spacing: 1.5px;
+    }
+
+    /* Анімація кнопок */
+    .hover-lift:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(13, 110, 253, 0.2) !important;
+    }
+    
+    .hover-btn:hover {
+        background-color: #f8f9fa;
+        filter: brightness(0.95);
+    }
+
+    /* Анімація для блоку Героя */
+    .fade-in-up {
+        animation: fadeInUp 1s ease-out;
+    }
+
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === МАГІЯ ГОРТАННЯ === */
+    .animate-on-scroll {
+        opacity: 0;
+        transform: translateY(50px);
+        transition: opacity 1s ease-out, transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .animate-on-scroll.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .animate-on-scroll.visible .card-animate-item-1 { transition-delay: 0.1s; }
+    .animate-on-scroll.visible .card-animate-item-2 { transition-delay: 0.25s; }
+    .animate-on-scroll.visible .card-animate-item-3 { transition-delay: 0.4s; }
+</style>
 
 @code {
     private int labsCount = 0;
@@ -60,8 +174,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        labsCount = await DbContext.Laboratories.CountAsync();
-        pcsCount = await DbContext.Computers.CountAsync();
-        softCount = await DbContext.Softwares.CountAsync();
+        labsCount = (await LabRepo.GetAllAsync()).Count;
+        pcsCount = (await ComputerRepo.GetAllAsync()).Count;
+        softCount = (await SoftwareRepo.GetAllAsync()).Count; 
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initializeScrollAnimations");
+        }
     }
 }

@@ -10,7 +10,13 @@
   <component name="ChangeListManager">
     <list default="true" id="c8ecca78-b296-42ba-a71e-b6ab0c625825" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.DBPCLabs.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.DBPCLabs.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Computers/ComputersList.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Computers/ComputersList.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Components/App.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/App.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Components/Pages/Home.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Home.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data/DbContext.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20260224232804_InitialCreate.Designer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/20260224232804_InitialCreate.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Migrations/AppDbContextModelSnapshot.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,6 +129,8 @@
       <workItem from="1772020945431" duration="23593000" />
       <workItem from="1772546957110" duration="10699000" />
       <workItem from="1772705218904" duration="2426000" />
+      <workItem from="1773928719080" duration="88000" />
+      <workItem from="1773929646869" duration="2408000" />
     </task>
     <servers />
   </component>
