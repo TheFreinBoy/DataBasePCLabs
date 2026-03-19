@@ -10,20 +10,7 @@
   <component name="ChangeListManager">
     <list default="true" id="c8ecca78-b296-42ba-a71e-b6ab0c625825" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.DBPCLabs.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.DBPCLabs.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Computers/AddComputer.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Computers/AddComputer.razor" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Components/Pages/Computers/ComputersList.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Computers/ComputersList.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Computers/EditComputer.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Computers/EditComputer.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Home.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Home.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Laboratory/AddLaboratory.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Laboratory/AddLaboratory.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Laboratory/EditLaboratory.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Laboratory/EditLaboratory.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Laboratory/LaboratoriesList.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Laboratory/LaboratoriesList.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Laboratory/LaboratoryDetails.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Laboratory/LaboratoryDetails.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Software/AddSoftware.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Software/AddSoftware.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Software/EditSoftware.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Software/EditSoftware.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Software/InstallSoftware.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Software/InstallSoftware.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Components/Pages/Software/Softwares.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Components/Pages/Software/Softwares.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DBPCLabs.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/DBPCLabs.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -134,7 +121,8 @@
       <updated>1771980123918</updated>
       <workItem from="1771980125522" duration="343000" />
       <workItem from="1772020945431" duration="23593000" />
-      <workItem from="1772546957110" duration="9975000" />
+      <workItem from="1772546957110" duration="10699000" />
+      <workItem from="1772705218904" duration="2426000" />
     </task>
     <servers />
   </component>

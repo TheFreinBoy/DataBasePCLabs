@@ -69,10 +69,11 @@
                                 <td class="align-middle" style="max-width: 250px;">
                                     @if (pc.InstalledSoftware != null && pc.InstalledSoftware.Any())
                                     {
-                                        <div class="d-flex flex-wrap gap-1">
+                                        <div class="d-flex flex-wrap gap-2">
                                             @foreach (var soft in pc.InstalledSoftware.Take(3))
                                             {
-                                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle rounded-pill px-2">
+                                                @* ОСЬ ТУТ ЗМІНЕНО ДИЗАЙН: суцільний колір, білий текст, невелика тінь *@
+                                                <span class="badge bg-primary text-white rounded-pill px-3 py-1 shadow-sm">
                                                     <i class="bi bi-disc-fill small me-1"></i>@soft.Name
                                                 </span>
                                             }
