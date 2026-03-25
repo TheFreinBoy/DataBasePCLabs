@@ -133,4 +133,39 @@ public class SoftwareRepository : BaseRepository
 
         await command.ExecuteNonQueryAsync();
     }
+    public async Task<List<string>> GetUniqueNamesAsync()
+    {
+        var list = new List<string>();
+        await using var connection = CreateConnection();
+        await connection.OpenAsync();
+        var sql = "SELECT DISTINCT \"Name\" FROM \"Softwares\" ORDER BY \"Name\"";
+        await using var command = new NpgsqlCommand(sql, connection);
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync()) list.Add(reader.GetString(0));
+        return list;
+    }
+
+    public async Task<List<string>> GetUniqueVersionsAsync()
+    {
+        var list = new List<string>();
+        await using var connection = CreateConnection();
+        await connection.OpenAsync();
+        var sql = "SELECT DISTINCT \"Version\" FROM \"Softwares\" ORDER BY \"Version\"";
+        await using var command = new NpgsqlCommand(sql, connection);
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync()) list.Add(reader.GetString(0));
+        return list;
+    }
+
+    public async Task<List<string>> GetUniqueLicensesAsync()
+    {
+        var list = new List<string>();
+        await using var connection = CreateConnection();
+        await connection.OpenAsync();
+        var sql = "SELECT DISTINCT \"LicenseType\" FROM \"Softwares\" ORDER BY \"LicenseType\"";
+        await using var command = new NpgsqlCommand(sql, connection);
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync()) list.Add(reader.GetString(0));
+        return list;
+    }
 }

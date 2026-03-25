@@ -18,8 +18,12 @@
     {
         if (firstRender)
         {
-
-            await JS.InvokeVoidAsync("eval", "var theme = localStorage.getItem('theme') || 'light'; document.body.setAttribute('data-theme', theme);");
+            string jsCode = @"
+                var theme = localStorage.getItem('theme') || 'light'; 
+                document.documentElement.setAttribute('data-bs-theme', theme);
+                document.body.setAttribute('data-theme', theme);
+            ";
+            await JS.InvokeVoidAsync("eval", jsCode);
         }
     }
 }

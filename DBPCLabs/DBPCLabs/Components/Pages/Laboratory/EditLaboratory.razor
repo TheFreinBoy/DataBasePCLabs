@@ -1,7 +1,9 @@
 ﻿@page "/laboratories/edit/{Id:int}"
-@using DBPCLabs.Models@using DBPCLabs.Repositories
+@using DBPCLabs.Models
+@using DBPCLabs.Repositories
 @inject LaboratoryRepository LabRepo
 @inject NavigationManager Navigation
+@inject ComputerRepository ComputerRepo
 
 <PageTitle>Редагування лабораторії</PageTitle>
 
@@ -23,6 +25,16 @@
                     <h3 class="fw-bold text-dark mb-4">
                         <i class="bi bi-pencil-square text-warning me-2"></i> Редагування: @lab.Name
                     </h3>
+                    
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger rounded-3 d-flex align-items-center shadow-sm mb-4">
+                            <i class="bi bi-shield-x me-2 fs-4"></i>
+                            <div>
+                                <strong>Увага!</strong> @errorMessage
+                            </div>
+                        </div>
+                    }
                     
                     <EditForm Model="@lab" OnValidSubmit="UpdateLaboratory">
                         
@@ -65,6 +77,7 @@
 @code {
     [Parameter]
     public int Id { get; set; }
+    private string? errorMessage;
 
     private Laboratory? lab;
 
@@ -80,7 +93,17 @@
 
     private async Task UpdateLaboratory()
     {
-        await LabRepo.UpdateAsync(lab!);
+        errorMessage = null;
+        
+        int currentComputers = await ComputerRepo.CountComputersInLabAsync(lab!.Id);
+        
+        if (lab.Capacity < currentComputers)
+        {
+            errorMessage = $"Неможливо зменшити місткість до {lab.Capacity}. У цій аудиторії вже зареєстровано {currentComputers} комп'ютерів. Спочатку відкріпіть або видаліть зайві ПК.";
+            return; 
+        }
+        
+        await LabRepo.UpdateAsync(lab);
         Navigation.NavigateTo("/laboratories");
     }
 }

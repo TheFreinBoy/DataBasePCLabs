@@ -1,5 +1,4 @@
 @page "/software/add"
-@using Microsoft.EntityFrameworkCore
 @using DBPCLabs.Models
 @using DBPCLabs.Repositories
 @inject SoftwareRepository SoftwareRepo
@@ -16,7 +15,7 @@
                 
                 @if (!string.IsNullOrEmpty(errorMessage))
                 {
-                    <div class="alert alert-danger rounded-3 d-flex align-items-center shadow-sm">
+                    <div class="alert alert-danger rounded-3 d-flex align-items-center shadow-sm mb-4">
                         <i class="bi bi-shield-x me-2 fs-4"></i>
                         <div>
                             <strong>Помилка збереження!</strong> @errorMessage
@@ -29,49 +28,81 @@
                     
                     <div class="mb-4">
                         <label class="form-label fw-bold text-dark">Назва програми:</label>
-                        <InputSelect @bind-Value="newSoftware.Name" class="form-select form-select-lg bg-light">
-                            <option value="" disabled selected>-- Оберіть програму зі списку --</option>
-                            <option value="Microsoft Office">Microsoft Office</option>
-                            <option value="Visual Studio">Visual Studio</option>
-                            <option value="Visual Studio Code">Visual Studio Code</option>
-                            <option value="AutoCAD">AutoCAD</option>
-                            <option value="Adobe Photoshop">Adobe Photoshop</option>
-                            <option value="IntelliJ IDEA">IntelliJ IDEA</option>
-                            <option value="SQL Server Management Studio">SQL Server Management Studio (SSMS)</option>
-                            <option value="Docker Desktop">Docker Desktop</option>
-                            <option value="PostgreSQL">PostgreSQL</option>
-                            <option value="Unity">Unity</option>
-                        </InputSelect>
+                        <div class="input-group">
+                            @if (showNewNameInput)
+                            {
+                                <input type="text" @bind="customName" class="form-control form-control-lg border-primary" placeholder="Введіть нову назву..." />
+                                <button type="button" class="btn btn-success px-4" @onclick="AddNewName" title="Зберегти"><i class="bi bi-check-lg"></i></button>
+                                <button type="button" class="btn btn-danger px-4" @onclick="() => showNewNameInput = false" title="Скасувати"><i class="bi bi-x-lg"></i></button>
+                            }
+                            else
+                            {
+                                <InputSelect @bind-Value="newSoftware.Name" class="form-select form-select-lg bg-light">
+                                    <option value="" disabled selected>-- Оберіть програму зі списку --</option>
+                                    @foreach (var name in predefinedNames)
+                                    {
+                                        <option value="@name">@name</option>
+                                    }
+                                </InputSelect>
+                                <button type="button" class="btn btn-primary px-3 shadow-sm" @onclick="() => showNewNameInput = true" title="Додати нову програму">
+                                    <i class="bi bi-plus-lg fw-bold"></i>
+                                </button>
+                            }
+                        </div>
                         <ValidationMessage For="@(() => newSoftware.Name)" class="text-danger small mt-1 fw-bold" />
                     </div>
 
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <label class="form-label fw-bold text-dark">Версія:</label>
-                            <InputSelect @bind-Value="newSoftware.Version" class="form-select form-select-lg bg-light">
-                                <option value="" disabled selected>-- Оберіть версію --</option>
-                                <option value="2019">2019</option>
-                                <option value="2022">2022</option>
-                                <option value="2024">2024</option>
-                                <option value="Остання (Latest)">Остання (Latest)</option>
-                                <option value="Community">Community</option>
-                                <option value="Professional">Professional</option>
-                                <option value="Enterprise">Enterprise</option>
-                                <option value="v1.0">v1.0</option>
-                                <option value="v2.0">v2.0</option>
-                            </InputSelect>
+                            <div class="input-group">
+                                @if (showNewVersionInput)
+                                {
+                                    <input type="text" @bind="customVersion" class="form-control form-control-lg border-primary" placeholder="Нова версія..." />
+                                    <button type="button" class="btn btn-success px-3" @onclick="AddNewVersion"><i class="bi bi-check-lg"></i></button>
+                                    <button type="button" class="btn btn-danger px-3" @onclick="() => showNewVersionInput = false"><i class="bi bi-x-lg"></i></button>
+                                }
+                                else
+                                {
+                                    <InputSelect @bind-Value="newSoftware.Version" class="form-select form-select-lg bg-light">
+                                        <option value="" disabled selected>-- Оберіть версію --</option>
+                                        @foreach (var version in predefinedVersions)
+                                        {
+                                            <option value="@version">@version</option>
+                                        }
+                                    </InputSelect>
+                                    <button type="button" class="btn btn-primary px-3 shadow-sm" @onclick="() => showNewVersionInput = true" title="Додати нову версію">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                }
+                            </div>
                             <ValidationMessage For="@(() => newSoftware.Version)" class="text-danger small mt-1 fw-bold" />
                         </div>
                         
+                        @* ПОЛЕ 3: ЛІЦЕНЗІЯ *@
                         <div class="col-md-6">
                             <label class="form-label fw-bold text-dark">Тип ліцензії:</label>
-                            <InputSelect @bind-Value="newSoftware.LicenseType" class="form-select form-select-lg bg-light">
-                                <option value="" disabled selected>-- Оберіть ліцензію --</option>
-                                <option value="Безкоштовна (Free/Open Source)">Безкоштовна (Free/Open Source)</option>
-                                <option value="Комерційна (Paid)">Комерційна (Paid)</option>
-                                <option value="Студентська (Educational)">Студентська (Educational)</option>
-                                <option value="Тріальна (Trial)">Тріальна (Trial)</option>
-                            </InputSelect>
+                            <div class="input-group">
+                                @if (showNewLicenseInput)
+                                {
+                                    <input type="text" @bind="customLicense" class="form-control form-control-lg border-primary" placeholder="Нова ліцензія..." />
+                                    <button type="button" class="btn btn-success px-3" @onclick="AddNewLicense"><i class="bi bi-check-lg"></i></button>
+                                    <button type="button" class="btn btn-danger px-3" @onclick="() => showNewLicenseInput = false"><i class="bi bi-x-lg"></i></button>
+                                }
+                                else
+                                {
+                                    <InputSelect @bind-Value="newSoftware.LicenseType" class="form-select form-select-lg bg-light">
+                                        <option value="" disabled selected>-- Оберіть ліцензію --</option>
+                                        @foreach (var license in predefinedLicenses)
+                                        {
+                                            <option value="@license">@license</option>
+                                        }
+                                    </InputSelect>
+                                    <button type="button" class="btn btn-primary px-3 shadow-sm" @onclick="() => showNewLicenseInput = true" title="Додати нову ліцензію">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                }
+                            </div>
                             <ValidationMessage For="@(() => newSoftware.LicenseType)" class="text-danger small mt-1 fw-bold" />
                         </div>
                     </div>
@@ -93,19 +124,75 @@
 @code {
     private Software newSoftware = new Software { Name = "", Version = "", LicenseType = "" };
     private string? errorMessage;
+    
+    private List<string> predefinedNames = new();
+    private List<string> predefinedVersions = new();
+    private List<string> predefinedLicenses = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        predefinedNames = await SoftwareRepo.GetUniqueNamesAsync();
+        predefinedVersions = await SoftwareRepo.GetUniqueVersionsAsync();
+        predefinedLicenses = await SoftwareRepo.GetUniqueLicensesAsync();
+    }
+    
+    private bool showNewNameInput = false;
+    private string customName = "";
 
+    private bool showNewVersionInput = false;
+    private string customVersion = "";
+
+    private bool showNewLicenseInput = false;
+    private string customLicense = "";
+    
+    private void AddNewName()
+    {
+        if (!string.IsNullOrWhiteSpace(customName))
+        {
+            string cleanName = customName.Trim();
+            if (!predefinedNames.Contains(cleanName)) predefinedNames.Add(cleanName);
+            newSoftware.Name = cleanName; 
+        }
+        showNewNameInput = false;
+        customName = "";
+    }
+
+    private void AddNewVersion()
+    {
+        if (!string.IsNullOrWhiteSpace(customVersion))
+        {
+            string cleanVersion = customVersion.Trim();
+            if (!predefinedVersions.Contains(cleanVersion)) predefinedVersions.Add(cleanVersion);
+            newSoftware.Version = cleanVersion;
+        }
+        showNewVersionInput = false;
+        customVersion = "";
+    }
+
+    private void AddNewLicense()
+    {
+        if (!string.IsNullOrWhiteSpace(customLicense))
+        {
+            string cleanLicense = customLicense.Trim();
+            if (!predefinedLicenses.Contains(cleanLicense)) predefinedLicenses.Add(cleanLicense);
+            newSoftware.LicenseType = cleanLicense;
+        }
+        showNewLicenseInput = false;
+        customLicense = "";
+    }
+    
     private async Task SaveSoftware()
     {
         errorMessage = null;
 
-        if (string.IsNullOrWhiteSpace(newSoftware.Name) || 
-            string.IsNullOrWhiteSpace(newSoftware.Version) || 
+        if (string.IsNullOrWhiteSpace(newSoftware.Name) ||
+            string.IsNullOrWhiteSpace(newSoftware.Version) ||
             string.IsNullOrWhiteSpace(newSoftware.LicenseType))
         {
-            errorMessage = "Будь ласка, оберіть значення для всіх полів зі списків.";
+            errorMessage = "Будь ласка, оберіть значення для всіх полів зі списків або додайте нові.";
             return;
         }
-        
+
         bool isDuplicate = await SoftwareRepo.IsDuplicateAsync(newSoftware.Name, newSoftware.Version);
 
         if (isDuplicate)
@@ -113,7 +200,7 @@
             errorMessage = $"Програма '{newSoftware.Name}' версії '{newSoftware.Version}' вже існує в базі!";
             return;
         }
-        
+
         await SoftwareRepo.AddAsync(newSoftware);
         Navigation.NavigateTo("/software");
     }

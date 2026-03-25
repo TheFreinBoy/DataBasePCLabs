@@ -49,25 +49,44 @@
                     @foreach (var soft in allSoftware)
                     {
                         <div class="col-md-6 col-lg-4 mb-3">
-                            <div class="form-check form-switch p-3 border rounded-3 transition-all @(selectedSoftwareIds.Contains(soft.Id) ? "bg-light border-primary shadow-sm" : "")" 
+                            <div class="software-card p-3 border rounded-3 transition-all d-flex align-items-center justify-content-between @(selectedSoftwareIds.Contains(soft.Id) ? "bg-light border-primary shadow-sm" : "")" 
                                  style="cursor: pointer; transition: 0.2s;" 
                                  @onclick="() => ToggleSoftware(soft.Id)">
+        
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3 fs-3 text-secondary">
+                                        <i class="bi bi-disc"></i>
+                                    </div>
+            
+                                    @* Назва та деталі *@
+                                    <div>
+                                        <strong class="d-block text-dark mb-1">@soft.Name</strong>
+                                        <div class="d-flex align-items-center text-muted small">
+                                            <span class="badge bg-secondary me-2">@soft.Version</span>
+                                            @soft.LicenseType
+                                        </div>
+                                    </div>
+                                </div>
                                 
-                                <input class="form-check-input ms-0 me-3 mt-2" type="checkbox" role="switch"
+                                <input class="form-check-input mt-0" type="checkbox" role="switch"
                                        checked="@selectedSoftwareIds.Contains(soft.Id)"
                                        style="transform: scale(1.4); cursor: pointer;"
                                        @onclick:stopPropagation="true"
                                        @onchange="() => ToggleSoftware(soft.Id)">
-                                       
-                                <label class="form-check-label w-100" style="cursor: pointer;" @onclick:stopPropagation="true">
-                                    <strong class="d-block text-dark mb-1">@soft.Name</strong>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="badge bg-secondary">@soft.Version</span>
-                                        <small class="text-muted">@soft.LicenseType</small>
-                                    </div>
-                                </label>
                             </div>
                         </div>
+                        
+                        <style>
+    .software-card {
+        border-radius: 12px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .software-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+</style>
                     }
                 </div>
 
