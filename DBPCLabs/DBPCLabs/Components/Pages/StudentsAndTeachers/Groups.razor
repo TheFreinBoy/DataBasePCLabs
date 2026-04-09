@@ -1,0 +1,328 @@
+﻿@page "/groups"
+@using DBPCLabs.Models
+@using DBPCLabs.Repositories
+@inject GroupRepository GroupRepo
+@inject StudentRepository StudentRepo
+@inject DepartmentRepository DepartmentRepo
+@inject IJSRuntime JS
+
+<PageTitle>Академічні групи</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark m-0">Академічні групи</h2>
+        
+        <div class="d-flex gap-3 align-items-center">
+            @if (!showForm)
+            {
+                <button class="btn btn-primary rounded-pill px-4 py-2 shadow-sm fw-bold" @onclick="ShowAddForm">
+                    Додати групу
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger shadow-sm rounded-3 d-flex align-items-center mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i> @errorMessage
+        </div>
+    }
+
+    @if (showForm)
+    {
+        <div class="shadow-sm p-4 mb-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <h4 class="fw-bold text-dark mb-4">@(isEditing ? "Редагування групи" : "Реєстрація нової групи")</h4>
+            
+            @if (departments == null || !departments.Any())
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle me-2"></i> <strong>Увага:</strong> Ви ще не створили жодної кафедри. Будь ласка, спочатку додайте кафедру до бази.
+                </div>
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" @onclick="CancelForm">Скасувати</button>
+            }
+            else
+            {
+                <EditForm Model="currentGroup" OnValidSubmit="SaveGroup">
+                    <DataAnnotationsValidator />
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold text-dark">Назва групи (напр. ПЗ-22-1)</label>
+                            <InputText @bind-Value="currentGroup.Name" class="form-control form-control-lg bg-light" placeholder="Введіть назву..." />
+                            <ValidationMessage For="@(() => currentGroup.Name)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label fw-bold text-dark">Кафедра</label>
+                            <InputSelect @bind-Value="currentGroup.DepartmentId" class="form-select form-select-lg bg-light">
+                                <option value="0" disabled>-- Оберіть кафедру --</option>
+                                @foreach (var dep in departments)
+                                {
+                                    <option value="@dep.Id">@dep.Name (@dep.Faculty)</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => currentGroup.DepartmentId)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-3">
+                        <button type="button" class="btn btn-light text-secondary rounded-pill px-4 fw-bold border" @onclick="CancelForm">Скасувати</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
+                            Зберегти
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    }
+
+    @if (groups == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Завантаження бази груп...</p>
+        </div>
+    }
+    else if (!groups.Any())
+    {
+        <div class="shadow-sm p-5 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <i class="bi bi-people text-muted mb-3" style="font-size: 3rem;"></i>
+            <h4 class="text-muted">Жодної групи ще не додано</h4>
+            <button class="btn btn-outline-primary mt-3 rounded-pill px-4" @onclick="ShowAddForm">Зареєструвати першу групу</button>
+        </div>
+    }
+    else
+    {
+        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <div class="table-responsive">
+                <table class="table table-hover border-white mb-0">
+                    <thead class="text-secondary small text-uppercase fw-bold">
+                        <tr>
+                            <th class="py-3 border-0" style="width: 80px;">ID</th>
+                            <th class="py-3 border-0">Назва групи</th>
+                            <th class="py-3 border-0">Кафедра</th>
+                            <th class="py-3 border-0 text-end" style="width: 320px;">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var group in groups)
+                        {
+                            <tr>
+                                <td class="align-middle text-muted fw-bold">#@group.Id</td>
+                                <td class="align-middle fw-bold text-dark">@group.Name</td>
+                                <td class="align-middle text-secondary">@group.DepartmentName</td>
+                                <td class="align-middle">
+                                    <div class="d-flex justify-content-end align-items-center gap-2 flex-nowrap">
+                                        <button class="btn btn-sm btn-light text-primary rounded-pill px-3 fw-bold border" @onclick="() => ShowStudentsList(group)">
+                                            Студенти
+                                        </button>
+                                        <button class="btn btn-sm btn-light text-success rounded-pill px-3 fw-bold border" @onclick="() => EditGroup(group)">
+                                            Редагувати
+                                        </button>
+                                        <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold border" @onclick="() => DeleteGroup(group.Id)">
+                                            Видалити
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@if (viewingGroup != null)
+{
+    <div class="custom-modal-backdrop" @onclick="CloseStudentsList"></div>
+    <div class="custom-modal-dialog shadow-lg fade-in-up" style="background: white; border-radius: 16px; border: 1px solid #edf0f5;">
+        
+        <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="fw-bold text-dark m-0">Студенти групи @viewingGroup.Name</h4>
+                <small class="text-muted">@viewingGroup.DepartmentName</small>
+            </div>
+            <button type="button" class="btn-close" @onclick="CloseStudentsList"></button>
+        </div>
+        
+        <div class="p-4" style="max-height: 50vh; overflow-y: auto;">
+            @if (groupStudents == null)
+            {
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            }
+            else if (!groupStudents.Any())
+            {
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-person-x fs-1 mb-2"></i>
+                    <p class="m-0 fs-5">У цій групі ще немає жодного студента.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="text-secondary small text-uppercase fw-bold">
+                            <tr>
+                                <th class="py-2 border-0">ID</th>
+                                <th class="py-2 border-0">ПІБ Студента</th>
+                                <th class="py-2 border-0">Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var student in groupStudents)
+                            {
+                                <tr>
+                                    <td class="text-muted fw-bold align-middle">#@student.Id</td>
+                                    <td class="fw-bold text-dark align-middle">@student.FullName</td>
+                                    <td class="text-secondary align-middle">@student.Email</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+        
+        <div class="p-4 border-top text-end bg-light" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+            <a href="/students" class="btn btn-outline-primary rounded-pill px-4 fw-bold me-2">Перейти до всіх студентів</a>
+            <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" @onclick="CloseStudentsList">Закрити</button>
+        </div>
+    </div>
+
+    <style>
+        .custom-modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            z-index: 1050;
+        }
+        .custom-modal-dialog {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%; max-width: 800px;
+            z-index: 1055;
+            display: flex; flex-direction: column;
+        }
+
+        body[data-theme='dark'] .custom-modal-dialog {
+            background-color: #1e1e2d !important;
+            border-color: #2b2b40 !important;
+        }
+        body[data-theme='dark'] .custom-modal-dialog .border-bottom,
+        body[data-theme='dark'] .custom-modal-dialog .border-top {
+            border-color: #2b2b40 !important;
+        }
+        body[data-theme='dark'] .custom-modal-dialog .bg-light {
+            background-color: #151521 !important;
+        }
+        body[data-theme='dark'] .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+    </style>
+}
+
+@code {
+    private List<Group>? groups;
+    private List<Department>? departments; // Додали список кафедр
+    private Group currentGroup = new();
+    private bool showForm = false;
+    private bool isEditing = false;
+    private string? errorMessage;
+
+    private Group? viewingGroup = null;
+    private List<Student>? groupStudents = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGroups();
+    }
+
+    private async Task LoadGroups()
+    {
+        // Тепер завантажуємо і групи, і список кафедр для форми
+        groups = await GroupRepo.GetAllAsync();
+        departments = await DepartmentRepo.GetAllAsync();
+    }
+
+    private async Task ShowStudentsList(Group group)
+    {
+        viewingGroup = group;
+        groupStudents = null; 
+        StateHasChanged(); 
+
+        groupStudents = await StudentRepo.GetStudentsByGroupAsync(group.Id);
+    }
+
+    private void CloseStudentsList()
+    {
+        viewingGroup = null;
+        groupStudents = null;
+    }
+
+    private void ShowAddForm()
+    {
+        errorMessage = null;
+        currentGroup = new Group { DepartmentId = 0 }; // 0 - нічого не обрано
+        isEditing = false;
+        showForm = true;
+    }
+
+    private void EditGroup(Group group)
+    {
+        errorMessage = null;
+        // Копіюємо і DepartmentId
+        currentGroup = new Group { Id = group.Id, Name = group.Name, DepartmentId = group.DepartmentId };
+        isEditing = true;
+        showForm = true;
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+        errorMessage = null;
+    }
+
+    private async Task SaveGroup()
+    {
+        errorMessage = null;
+
+        // Захист від порожньої кафедри
+        if (currentGroup.DepartmentId == 0)
+        {
+            errorMessage = "Будь ласка, оберіть кафедру зі списку!";
+            return;
+        }
+
+        bool isDuplicate = await GroupRepo.IsDuplicateNameAsync(currentGroup.Name.Trim(), isEditing ? currentGroup.Id : null);
+        if (isDuplicate)
+        {
+            errorMessage = $"Група з назвою '{currentGroup.Name}' вже існує!";
+            return;
+        }
+
+        if (isEditing)
+        {
+            await GroupRepo.UpdateAsync(currentGroup);
+        }
+        else
+        {
+            await GroupRepo.AddAsync(currentGroup);
+        }
+
+        await LoadGroups(); 
+        showForm = false;   
+    }
+
+    private async Task DeleteGroup(int id)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Ви впевнені, що хочете видалити цю групу? Всі студенти цієї групи також будуть видалені!");
+        if (confirm)
+        {
+            await GroupRepo.DeleteAsync(id);
+            await LoadGroups();
+        }
+    }
+}

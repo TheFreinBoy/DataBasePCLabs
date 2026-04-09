@@ -7,6 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<DBPCLabs.Repositories.LaboratoryRepository>();
 builder.Services.AddScoped<DBPCLabs.Repositories.ComputerRepository>();
 builder.Services.AddScoped<DBPCLabs.Repositories.SoftwareRepository>();
+builder.Services.AddScoped<DBPCLabs.Repositories.GroupRepository>();
+builder.Services.AddScoped<DBPCLabs.Repositories.StudentRepository>();
+builder.Services.AddScoped<DBPCLabs.Repositories.TeacherRepository>();
+builder.Services.AddScoped<DBPCLabs.Repositories.DepartmentRepository>();
+builder.Services.AddScoped<DBPCLabs.Repositories.ReservationRepository>();
 // Localization
 builder.Services.AddLocalization();
 // Add services to the container.

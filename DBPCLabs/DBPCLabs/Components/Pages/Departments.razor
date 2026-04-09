@@ -1,0 +1,194 @@
+﻿@page "/departments"
+@using DBPCLabs.Models
+@using DBPCLabs.Repositories
+@inject DepartmentRepository DepartmentRepo
+@inject IJSRuntime JS
+
+<PageTitle>Кафедри та Факультети</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark m-0">Структура університету</h2>
+      
+        </div>
+        
+        <div class="d-flex gap-3 align-items-center">
+            @if (!showForm)
+            {
+                <button class="btn btn-primary rounded-pill px-4 py-2 shadow-sm fw-bold" @onclick="ShowAddForm">
+                    Додати кафедру
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger shadow-sm rounded-3 d-flex align-items-center mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i> @errorMessage
+        </div>
+    }
+
+    @if (showForm)
+    {
+        <div class="shadow-sm p-4 mb-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <h4 class="fw-bold text-dark mb-4">@(isEditing ? "Редагування кафедри" : "Створення нової кафедри")</h4>
+            <EditForm Model="currentDepartment" OnValidSubmit="SaveDepartment">
+                <DataAnnotationsValidator />
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Назва кафедри</label>
+                        <InputText @bind-Value="currentDepartment.Name" class="form-control form-control-lg bg-light" placeholder="напр. Кафедра інженерії програмного забезпечення" />
+                        <ValidationMessage For="@(() => currentDepartment.Name)" class="text-danger small mt-1 fw-bold" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Факультет / Інститут</label>
+                        <InputText @bind-Value="currentDepartment.Faculty" class="form-control form-control-lg bg-light" placeholder="напр. ФОТІУС, ФІТ..." />
+                        <ValidationMessage For="@(() => currentDepartment.Faculty)" class="text-danger small mt-1 fw-bold" />
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-3">
+                    <button type="button" class="btn btn-light text-secondary rounded-pill px-4 fw-bold border" @onclick="CancelForm">Скасувати</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
+                        Зберегти
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    }
+
+    @if (departments == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Завантаження структури...</p>
+        </div>
+    }
+    else if (!departments.Any())
+    {
+        <div class="shadow-sm p-5 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <i class="bi bi-building text-muted mb-3" style="font-size: 3rem;"></i>
+            <h4 class="text-muted">Жодної кафедри ще не додано</h4>
+            <button class="btn btn-outline-primary mt-3 rounded-pill px-4" @onclick="ShowAddForm">Створити першу кафедру</button>
+        </div>
+    }
+    else
+    {
+        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <div class="table-responsive">
+                <table class="table table-hover border-white mb-0">
+                    <thead class="text-secondary small text-uppercase fw-bold">
+                        <tr>
+                            <th class="py-3 border-0" style="width: 80px;">ID</th>
+                            <th class="py-3 border-0">Назва кафедри</th>
+                            <th class="py-3 border-0">Факультет</th>
+                            <th class="py-3 border-0 text-end" style="width: 250px;">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var dep in departments)
+                        {
+                            <tr>
+                                <td class="align-middle text-muted fw-bold">#@dep.Id</td>
+                                <td class="align-middle fw-bold text-dark">@dep.Name</td>
+                                <td class="align-middle">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-2 rounded-pill">
+                                        @dep.Faculty
+                                    </span>
+                                </td>
+                                <td class="align-middle text-end">
+                                    <div class="d-flex justify-content-end align-items-center gap-2 flex-nowrap">
+                                        <button class="btn btn-sm btn-light text-success rounded-pill px-3 fw-bold border" @onclick="() => EditDepartment(dep)">Редагувати</button>
+                                        <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold border" @onclick="() => DeleteDepartment(dep.Id)">Видалити</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Department>? departments;
+    private Department currentDepartment = new();
+    private bool showForm = false;
+    private bool isEditing = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        departments = await DepartmentRepo.GetAllAsync();
+    }
+
+    private void ShowAddForm()
+    {
+        errorMessage = null;
+        currentDepartment = new Department(); 
+        isEditing = false;
+        showForm = true;
+    }
+
+    private void EditDepartment(Department dep)
+    {
+        errorMessage = null;
+        currentDepartment = new Department 
+        { 
+            Id = dep.Id, 
+            Name = dep.Name, 
+            Faculty = dep.Faculty 
+        };
+        isEditing = true;
+        showForm = true;
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+        errorMessage = null;
+    }
+
+    private async Task SaveDepartment()
+    {
+        errorMessage = null;
+
+        if (isEditing)
+        {
+            await DepartmentRepo.UpdateAsync(currentDepartment);
+        }
+        else
+        {
+            await DepartmentRepo.AddAsync(currentDepartment);
+        }
+
+        await LoadData(); 
+        showForm = false;   
+    }
+
+    private async Task DeleteDepartment(int id)
+    {
+        errorMessage = null;
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Видалити цю кафедру? Увага: якщо до неї прив'язані викладачі або групи, видалення буде заблоковано системою.");
+        
+        if (confirm)
+        {
+            try
+            {
+                await DepartmentRepo.DeleteAsync(id);
+                await LoadData();
+            }
+            catch (Exception)
+            {
+                errorMessage = "Помилка: Ця кафедра вже використовується! Спочатку видаліть або переведіть на іншу кафедру всіх пов'язаних викладачів та групи.";
+            }
+        }
+    }
+}

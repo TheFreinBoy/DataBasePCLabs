@@ -1,0 +1,242 @@
+﻿@page "/teachers"
+@using DBPCLabs.Models
+@using DBPCLabs.Repositories
+@inject TeacherRepository TeacherRepo
+@inject DepartmentRepository DepartmentRepo
+@inject IJSRuntime JS
+
+<PageTitle>Склад викладачів</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark m-0">Склад викладачів</h2>
+        
+        <div class="d-flex gap-3 align-items-center">
+            @if (!showForm)
+            {
+                <button class="btn btn-primary rounded-pill px-4 py-2 shadow-sm fw-bold" @onclick="ShowAddForm">
+                    Додати викладача
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger shadow-sm rounded-3 d-flex align-items-center mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i> @errorMessage
+        </div>
+    }
+
+    @if (showForm)
+    {
+        <div class="shadow-sm p-4 mb-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <h4 class="fw-bold text-dark mb-4">@(isEditing ? "Редагування профілю" : "Реєстрація викладача")</h4>
+            
+            @if (departments == null || !departments.Any())
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle me-2"></i> <strong>Увага:</strong> Ви ще не створили жодної кафедри. Будь ласка, спочатку додайте кафедру до бази.
+                </div>
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" @onclick="CancelForm">Скасувати</button>
+            }
+            else
+            {
+                <EditForm Model="currentTeacher" OnValidSubmit="SaveTeacher">
+                    <DataAnnotationsValidator />
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-dark">ПІБ Викладача</label>
+                            <InputText @bind-Value="currentTeacher.FullName" class="form-control form-control-lg bg-light" placeholder="Шевченко О. М." />
+                            <ValidationMessage For="@(() => currentTeacher.FullName)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-dark">Email адреса</label>
+                            <InputText @bind-Value="currentTeacher.Email" type="email" class="form-control form-control-lg bg-light" placeholder="teacher@unilab.edu" />
+                            <ValidationMessage For="@(() => currentTeacher.Email)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-dark">Кафедра</label>
+                            <InputSelect @bind-Value="currentTeacher.DepartmentId" class="form-select form-select-lg bg-light">
+                                <option value="0" disabled>-- Оберіть кафедру --</option>
+                                @foreach (var dep in departments)
+                                {
+                                    <option value="@dep.Id">@dep.Name (@dep.Faculty)</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => currentTeacher.DepartmentId)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-3">
+                        <button type="button" class="btn btn-light text-secondary rounded-pill px-4 fw-bold border" @onclick="CancelForm">Скасувати</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
+                            Зберегти
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    }
+
+    @if (teachers == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Завантаження бази викладачів...</p>
+        </div>
+    }
+    else if (!teachers.Any())
+    {
+        <div class="shadow-sm p-5 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <i class="bi bi-person-workspace text-muted mb-3" style="font-size: 3rem;"></i>
+            <h4 class="text-muted">Жодного викладача ще не додано</h4>
+            <button class="btn btn-outline-primary mt-3 rounded-pill px-4" @onclick="ShowAddForm">Додати першого викладача</button>
+        </div>
+    }
+    else
+    {
+        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <div class="table-responsive">
+                <table class="table table-hover border-white mb-0">
+                    <thead class="text-secondary small text-uppercase fw-bold">
+                        <tr>
+                            <th class="py-3 border-0" style="width: 80px;">ID</th>
+                            <th class="py-3 border-0">ПІБ Викладача</th>
+                            <th class="py-3 border-0">Кафедра</th>
+                            <th class="py-3 border-0">Email</th>
+                            <th class="py-3 border-0 text-end" style="width: 250px;">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var teacher in teachers)
+                        {
+                            <tr>
+                                <td class="align-middle text-muted fw-bold">#@teacher.Id</td>
+                                <td class="align-middle fw-bold text-dark">@teacher.FullName</td>
+                                <td class="align-middle">
+                                    <span class="badge bg-secondary px-3 py-2 rounded-pill">@teacher.DepartmentName</span>
+                                </td>
+                                <td class="align-middle text-secondary">
+                                    <i class="bi bi-envelope me-1"></i> @teacher.Email
+                                </td>
+                                <td class="align-middle">
+                                    <div class="d-flex justify-content-end align-items-center gap-2 flex-nowrap">
+                                        <button class="btn btn-sm btn-light text-success rounded-pill px-3 fw-bold border" @onclick="() => EditTeacher(teacher)">Редагувати</button>
+                                        <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold border" @onclick="() => DeleteTeacher(teacher.Id)">Видалити</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Teacher>? teachers;
+    private List<Department>? departments; // Додали список кафедр
+    private Teacher currentTeacher = new();
+    private bool showForm = false;
+    private bool isEditing = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        // Завантажуємо і викладачів, і список кафедр для форми
+        teachers = await TeacherRepo.GetAllAsync();
+        departments = await DepartmentRepo.GetAllAsync();
+    }
+
+    private void ShowAddForm()
+    {
+        errorMessage = null;
+        currentTeacher = new Teacher { DepartmentId = 0 }; // 0 - кафедра не обрана
+        isEditing = false;
+        showForm = true;
+    }
+
+    private void EditTeacher(Teacher teacher)
+    {
+        errorMessage = null;
+        currentTeacher = new Teacher 
+        { 
+            Id = teacher.Id, 
+            FullName = teacher.FullName, 
+            DepartmentId = teacher.DepartmentId, // Тепер використовуємо ID
+            Email = teacher.Email
+        };
+        isEditing = true;
+        showForm = true;
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+        errorMessage = null;
+    }
+
+    private async Task SaveTeacher()
+    {
+        errorMessage = null;
+
+        // Захист від порожньої кафедри
+        if (currentTeacher.DepartmentId == 0)
+        {
+            errorMessage = "Будь ласка, оберіть кафедру зі списку!";
+            return;
+        }
+
+        // Перевірка на опечатки
+        if (!string.IsNullOrWhiteSpace(currentTeacher.Email))
+        {
+            string email = currentTeacher.Email.ToLower().Trim();
+            if (email.EndsWith("@gmail.co") || email.EndsWith("@gmal.com") || email.EndsWith("@gmail.ru"))
+            {
+                errorMessage = "Схоже на опечатку в Email. Можливо, ви мали на увазі @gmail.com?";
+                return;
+            }
+            if (email.EndsWith("@ukr.ne"))
+            {
+                errorMessage = "Схоже на опечатку. Ви мали на увазі @ukr.net?";
+                return;
+            }
+
+            // Перевірка на дублікат у базі
+            bool isDuplicate = await TeacherRepo.IsDuplicateEmailAsync(email, isEditing ? currentTeacher.Id : null);
+            if (isDuplicate)
+            {
+                errorMessage = $"Викладач з поштою '{currentTeacher.Email}' вже зареєстрований!";
+                return;
+            }
+        }
+
+        if (isEditing)
+        {
+            await TeacherRepo.UpdateAsync(currentTeacher);
+        }
+        else
+        {
+            await TeacherRepo.AddAsync(currentTeacher);
+        }
+
+        await LoadData(); 
+        showForm = false;   
+    }
+
+    private async Task DeleteTeacher(int id)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Видалити цього викладача з бази?");
+        if (confirm)
+        {
+            await TeacherRepo.DeleteAsync(id);
+            await LoadData();
+        }
+    }
+}

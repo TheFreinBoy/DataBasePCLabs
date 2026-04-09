@@ -1,0 +1,242 @@
+﻿@page "/students"
+@using DBPCLabs.Models
+@using DBPCLabs.Repositories
+@inject StudentRepository StudentRepo
+@inject GroupRepository GroupRepo
+@inject IJSRuntime JS
+
+<PageTitle>База студентів</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark m-0">База студентів</h2>
+        
+        <div class="d-flex gap-3 align-items-center">
+            @if (!showForm)
+            {
+                <button class="btn btn-primary rounded-pill px-4 py-2 shadow-sm fw-bold" @onclick="ShowAddForm">
+                    Додати студента
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger shadow-sm rounded-3 d-flex align-items-center mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i> @errorMessage
+        </div>
+    }
+
+    @if (showForm)
+    {
+        <div class="shadow-sm p-4 mb-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <h4 class="fw-bold text-dark mb-4">@(isEditing ? "Редагування профілю" : "Реєстрація нового студента")</h4>
+            
+            @if (groups == null || !groups.Any())
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle me-2"></i> <strong>Увага:</strong> Ви ще не створили жодної академічної групи. Будь ласка, <a href="/groups" class="alert-link">додайте групу</a> перед реєстрацією студентів.
+                </div>
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" @onclick="CancelForm">Скасувати</button>
+            }
+            else
+            {
+                <EditForm Model="currentStudent" OnValidSubmit="SaveStudent">
+                    <DataAnnotationsValidator />
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-dark">ПІБ студента</label>
+                            <InputText @bind-Value="currentStudent.FullName" class="form-control form-control-lg bg-light" placeholder="Іванов Іван..." />
+                            <ValidationMessage For="@(() => currentStudent.FullName)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-dark">Email адреса</label>
+                            <InputText @bind-Value="currentStudent.Email" type="email" class="form-control form-control-lg bg-light" placeholder="student@unilab.edu..." />
+                            <ValidationMessage For="@(() => currentStudent.Email)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-dark">Академічна група</label>
+                            <InputSelect @bind-Value="currentStudent.GroupId" class="form-select form-select-lg bg-light">
+                                <option value="0" disabled>-- Оберіть групу --</option>
+                                @foreach (var group in groups)
+                                {
+                                    <option value="@group.Id">@group.Name (@group.DepartmentName)</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => currentStudent.GroupId)" class="text-danger small mt-1 fw-bold" />
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-3">
+                        <button type="button" class="btn btn-light text-secondary rounded-pill px-4 fw-bold border" @onclick="CancelForm">Скасувати</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
+                            Зберегти
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    }
+
+    @if (students == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Завантаження бази студентів...</p>
+        </div>
+    }
+    else if (!students.Any())
+    {
+        <div class="shadow-sm p-5 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <i class="bi bi-person-badge text-muted mb-3" style="font-size: 3rem;"></i>
+            <h4 class="text-muted">Жодного студента ще не додано</h4>
+            <button class="btn btn-outline-primary mt-3 rounded-pill px-4" @onclick="ShowAddForm">Зареєструвати першого студента</button>
+        </div>
+    }
+    else
+    {
+        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <div class="table-responsive">
+                <table class="table table-hover border-white mb-0">
+                    <thead class="text-secondary small text-uppercase fw-bold">
+                        <tr>
+                            <th class="py-3 border-0" style="width: 80px;">ID</th>
+                            <th class="py-3 border-0">ПІБ Студента</th>
+                            <th class="py-3 border-0">Email</th>
+                            <th class="py-3 border-0">Група</th>
+                            <th class="py-3 border-0 text-end" style="width: 250px;">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var student in students)
+                        {
+                            <tr>
+                                <td class="align-middle text-muted fw-bold">#@student.Id</td>
+                                <td class="align-middle fw-bold text-dark">@student.FullName</td>
+                                <td class="align-middle text-secondary">
+                                    <i class="bi bi-envelope me-1"></i> @student.Email
+                                </td>
+                                <td class="align-middle">
+                                    <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle px-3 py-2 rounded-pill">
+                                        @student.GroupName
+                                    </span>
+                                </td>
+                                <td class="text-end align-middle">
+                                    <button class="btn btn-sm btn-light text-success rounded-pill me-2 px-3 fw-bold border" @onclick="() => EditStudent(student)">Редагувати</button>
+                                    <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold border" @onclick="() => DeleteStudent(student.Id)">Видалити</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Student>? students;
+    private List<Group> groups = new(); // Список для випадаючого меню
+    private Student currentStudent = new();
+    private bool showForm = false;
+    private bool isEditing = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        // Завантажуємо і студентів, і список груп для форми
+        students = await StudentRepo.GetAllAsync();
+        groups = await GroupRepo.GetAllAsync();
+    }
+
+    private void ShowAddForm()
+    {
+        errorMessage = null;
+        currentStudent = new Student { GroupId = 0 }; // 0 означає "не обрано"
+        isEditing = false;
+        showForm = true;
+    }
+
+    private void EditStudent(Student student)
+    {
+        errorMessage = null;
+        // Копіюємо дані для безпечного редагування
+        currentStudent = new Student 
+        { 
+            Id = student.Id, 
+            FullName = student.FullName, 
+            Email = student.Email, 
+            GroupId = student.GroupId 
+        };
+        isEditing = true;
+        showForm = true;
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+        errorMessage = null;
+    }
+
+    private async Task SaveStudent()
+    {
+        errorMessage = null;
+
+        if (currentStudent.GroupId == 0)
+        {
+            errorMessage = "Будь ласка, оберіть академічну групу!";
+            return;
+        }
+
+        // Захист від опечаток та дублікатів
+        if (!string.IsNullOrWhiteSpace(currentStudent.Email))
+        {
+            string email = currentStudent.Email.ToLower().Trim();
+            
+            if (email.EndsWith("@gmail.co") || email.EndsWith("@gmal.com") || email.EndsWith("@gmail.ru"))
+            {
+                errorMessage = "Схоже на опечатку в Email. Перевірте правильність домену (можливо, ви мали на увазі @gmail.com?)";
+                return;
+            }
+            if (email.EndsWith("@ukr.ne"))
+            {
+                errorMessage = "Схоже на опечатку. Ви мали на увазі @ukr.net?";
+                return;
+            }
+
+            bool isDuplicateEmail = await StudentRepo.IsDuplicateEmailAsync(currentStudent.Email, isEditing ? currentStudent.Id : null);
+            if (isDuplicateEmail)
+            {
+                errorMessage = $"Студент з електронною поштою '{currentStudent.Email}' вже зареєстрований у системі!";
+                return;
+            }
+        }
+
+        if (isEditing)
+        {
+            await StudentRepo.UpdateAsync(currentStudent);
+        }
+        else
+        {
+            await StudentRepo.AddAsync(currentStudent);
+        }
+
+        await LoadData(); 
+        showForm = false;   
+    }
+
+    private async Task DeleteStudent(int id)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Видалити цього студента з бази?");
+        if (confirm)
+        {
+            await StudentRepo.DeleteAsync(id);
+            await LoadData();
+        }
+    }
+}
