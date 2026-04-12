@@ -3,19 +3,13 @@ using Npgsql;
 
 namespace DBPCLabs.Repositories
 {
-    public class ReservationRepository
+    public class ReservationRepository:BaseRepository
     {
-        private readonly IConfiguration _configuration;
-        private readonly string _connectionString;
 
-        public ReservationRepository(IConfiguration configuration)
+        public ReservationRepository(IConfiguration configuration) : base(configuration)
         {
-            _configuration = configuration;
-            _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
+            
         }
-
-        private NpgsqlConnection CreateConnection() => new NpgsqlConnection(_connectionString);
-
         public async Task<List<Reservation>> GetAllAsync()
         {
             var reservations = new List<Reservation>();
@@ -70,48 +64,124 @@ namespace DBPCLabs.Repositories
             await using var connection = CreateConnection();
             await connection.OpenAsync();
             
-            if (res.IsGroupReservation && res.LaboratoryId.HasValue && res.GroupId.HasValue)
+            int? targetLabId = res.LaboratoryId;
+            if (!res.IsGroupReservation && res.ComputerId.HasValue)
+            {
+                var getLabSql = "SELECT \"LaboratoryId\" FROM \"Computers\" WHERE \"Id\" = @CompId";
+                await using var getLabCmd = new NpgsqlCommand(getLabSql, connection);
+                getLabCmd.Parameters.AddWithValue("CompId", res.ComputerId.Value);
+                var result = await getLabCmd.ExecuteScalarAsync();
+                if (result != null && result != DBNull.Value)
+                    targetLabId = Convert.ToInt32(result);
+            }
+            
+            if (!res.IsGroupReservation && res.StudentId.HasValue)
+            {
+                var stOverlapSql = @"
+                    SELECT COUNT(*) FROM ""Reservations"" 
+                    WHERE ""StudentId"" = @StudentId 
+                      AND ""StartTime"" < @EndTime AND ""EndTime"" > @StartTime 
+                      AND ""Id"" != @ResId";
+                await using var cmd = new NpgsqlCommand(stOverlapSql, connection);
+                cmd.Parameters.AddWithValue("StudentId", res.StudentId.Value);
+                cmd.Parameters.AddWithValue("StartTime", res.StartTime);
+                cmd.Parameters.AddWithValue("EndTime", res.EndTime);
+                cmd.Parameters.AddWithValue("ResId", res.Id);
+                if ((long)await cmd.ExecuteScalarAsync()! > 0) return "Цей студент вже має бронювання на цей час!";
+            }
+            
+            if (res.IsGroupReservation && res.GroupId.HasValue)
+            {
+                var grOverlapSql = @"
+                    SELECT COUNT(*) FROM ""Reservations"" 
+                    WHERE ""GroupId"" = @GroupId 
+                      AND ""StartTime"" < @EndTime AND ""EndTime"" > @StartTime 
+                      AND ""Id"" != @ResId";
+                await using var cmd = new NpgsqlCommand(grOverlapSql, connection);
+                cmd.Parameters.AddWithValue("GroupId", res.GroupId.Value);
+                cmd.Parameters.AddWithValue("StartTime", res.StartTime);
+                cmd.Parameters.AddWithValue("EndTime", res.EndTime);
+                cmd.Parameters.AddWithValue("ResId", res.Id);
+                if ((long)await cmd.ExecuteScalarAsync()! > 0) return "Ця група вже має заняття на цей час!";
+            }
+            
+            if (res.TeacherId.HasValue && targetLabId.HasValue)
+            {
+                var teacherOverlapSql = @"
+                    SELECT COUNT(*) FROM ""Reservations"" r
+                    LEFT JOIN ""Computers"" c ON r.""ComputerId"" = c.""Id""
+                    WHERE r.""TeacherId"" = @TeacherId
+                      AND r.""StartTime"" < @EndTime AND r.""EndTime"" > @StartTime
+                      AND r.""Id"" != @ResId
+                      AND (
+                           (r.""IsGroupReservation"" = true AND r.""LaboratoryId"" != @TargetLabId)
+                           OR
+                           (r.""IsGroupReservation"" = false AND c.""LaboratoryId"" != @TargetLabId)
+                      )";
+                await using var cmd = new NpgsqlCommand(teacherOverlapSql, connection);
+                cmd.Parameters.AddWithValue("TeacherId", res.TeacherId.Value);
+                cmd.Parameters.AddWithValue("StartTime", res.StartTime);
+                cmd.Parameters.AddWithValue("EndTime", res.EndTime);
+                cmd.Parameters.AddWithValue("TargetLabId", targetLabId.Value);
+                cmd.Parameters.AddWithValue("ResId", res.Id);
+                if ((long)await cmd.ExecuteScalarAsync()! > 0) return "Цей викладач вже веде пару в ІНШІЙ аудиторії у цей час!";
+            }
+            
+            if (!res.IsGroupReservation && res.ComputerId.HasValue)
+            {
+                var pcOverlapSql = @"
+                    SELECT COUNT(*) FROM ""Reservations"" 
+                    WHERE ""ComputerId"" = @CompId 
+                      AND ""StartTime"" < @EndTime AND ""EndTime"" > @StartTime 
+                      AND ""Id"" != @ResId";
+                await using var cmd = new NpgsqlCommand(pcOverlapSql, connection);
+                cmd.Parameters.AddWithValue("CompId", res.ComputerId.Value);
+                cmd.Parameters.AddWithValue("StartTime", res.StartTime);
+                cmd.Parameters.AddWithValue("EndTime", res.EndTime);
+                cmd.Parameters.AddWithValue("ResId", res.Id);
+                if ((long)await cmd.ExecuteScalarAsync()! > 0) return "Цей конкретний комп'ютер вже заброньовано!";
+            }
+            
+            if (targetLabId.HasValue)
             {
                 var pcCountSql = "SELECT COUNT(*) FROM \"Computers\" WHERE \"LaboratoryId\" = @LabId";
                 await using var pcCmd = new NpgsqlCommand(pcCountSql, connection);
-                pcCmd.Parameters.AddWithValue("LabId", res.LaboratoryId.Value);
-                long pcCount = (long)await pcCmd.ExecuteScalarAsync()!;
-
-                var stCountSql = "SELECT COUNT(*) FROM \"Students\" WHERE \"GroupId\" = @GroupId";
-                await using var stCmd = new NpgsqlCommand(stCountSql, connection);
-                stCmd.Parameters.AddWithValue("GroupId", res.GroupId.Value);
-                long stCount = (long)await stCmd.ExecuteScalarAsync()!;
-
-                if (stCount > pcCount)
+                pcCmd.Parameters.AddWithValue("LabId", targetLabId.Value);
+                long totalPcs = (long)await pcCmd.ExecuteScalarAsync()!;
+                
+                var existingDemandSql = @"
+                    SELECT COALESCE(SUM(
+                        CASE
+                            WHEN r.""IsGroupReservation"" = false THEN 1
+                            WHEN r.""IsGroupReservation"" = true THEN (SELECT COUNT(*) FROM ""Students"" s WHERE s.""GroupId"" = r.""GroupId"")
+                            ELSE 0
+                        END
+                    ), 0)
+                    FROM ""Reservations"" r
+                    WHERE r.""StartTime"" < @EndTime AND r.""EndTime"" > @StartTime
+                      AND r.""Id"" != @ResId
+                      AND (r.""LaboratoryId"" = @LabId OR r.""ComputerId"" IN (SELECT ""Id"" FROM ""Computers"" WHERE ""LaboratoryId"" = @LabId))";
+                
+                await using var demandCmd = new NpgsqlCommand(existingDemandSql, connection);
+                demandCmd.Parameters.AddWithValue("LabId", targetLabId.Value);
+                demandCmd.Parameters.AddWithValue("StartTime", res.StartTime);
+                demandCmd.Parameters.AddWithValue("EndTime", res.EndTime);
+                demandCmd.Parameters.AddWithValue("ResId", res.Id);
+                long existingDemand = Convert.ToInt64(await demandCmd.ExecuteScalarAsync());
+                
+                long newDemand = 1; 
+                if (res.IsGroupReservation && res.GroupId.HasValue)
                 {
-                    return $"Недостатньо місць! У групі {stCount} студентів, а в лабораторії лише {pcCount} комп'ютерів.";
+                    var stCountSql = "SELECT COUNT(*) FROM \"Students\" WHERE \"GroupId\" = @GroupId";
+                    await using var stCmd = new NpgsqlCommand(stCountSql, connection);
+                    stCmd.Parameters.AddWithValue("GroupId", res.GroupId.Value);
+                    newDemand = (long)await stCmd.ExecuteScalarAsync()!;
                 }
                 
-                var overlapSql = @"
-                    SELECT COUNT(*) FROM ""Reservations"" 
-                    WHERE ""StartTime"" < @EndTime AND ""EndTime"" > @StartTime
-                    AND (""LaboratoryId"" = @LabId OR ""ComputerId"" IN (SELECT ""Id"" FROM ""Computers"" WHERE ""LaboratoryId"" = @LabId))";
-                
-                await using var overlapCmd = new NpgsqlCommand(overlapSql, connection);
-                overlapCmd.Parameters.AddWithValue("LabId", res.LaboratoryId.Value);
-                overlapCmd.Parameters.AddWithValue("StartTime", res.StartTime);
-                overlapCmd.Parameters.AddWithValue("EndTime", res.EndTime);
-                if ((long)await overlapCmd.ExecuteScalarAsync()! > 0)
-                    return "Ця лабораторія (або деякі комп'ютери в ній) вже заброньовані на цей час!";
-            }
-            else if (!res.IsGroupReservation && res.ComputerId.HasValue)
-            {
-                var overlapSql = @"
-                    SELECT COUNT(*) FROM ""Reservations"" 
-                    WHERE ""StartTime"" < @EndTime AND ""EndTime"" > @StartTime
-                    AND (""ComputerId"" = @CompId OR ""LaboratoryId"" = (SELECT ""LaboratoryId"" FROM ""Computers"" WHERE ""Id"" = @CompId))";
-                
-                await using var overlapCmd = new NpgsqlCommand(overlapSql, connection);
-                overlapCmd.Parameters.AddWithValue("CompId", res.ComputerId.Value);
-                overlapCmd.Parameters.AddWithValue("StartTime", res.StartTime);
-                overlapCmd.Parameters.AddWithValue("EndTime", res.EndTime);
-                if ((long)await overlapCmd.ExecuteScalarAsync()! > 0)
-                    return "Цей комп'ютер (або вся лабораторія) вже заброньовані на цей час!";
+                if (existingDemand + newDemand > totalPcs)
+                {
+                    return $"Недостатньо місць! В аудиторії {totalPcs} ПК. Вже зайнято: {existingDemand}. Ви намагаєтесь посадити ще: {newDemand}.";
+                }
             }
 
             return null; 

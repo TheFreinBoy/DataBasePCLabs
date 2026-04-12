@@ -3,18 +3,9 @@ using Npgsql;
 
 namespace DBPCLabs.Repositories
 {
-    public class GroupRepository
+    public class GroupRepository: BaseRepository
     {
-        private readonly IConfiguration _configuration;
-        private readonly string _connectionString;
-
-        public GroupRepository(IConfiguration configuration)
-        {
-            _configuration = configuration;
-            _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
-        }
-
-        private NpgsqlConnection CreateConnection() => new NpgsqlConnection(_connectionString);
+        public GroupRepository(IConfiguration configuration) : base(configuration) { }
         
         public async Task<List<Group>> GetAllAsync()
         {

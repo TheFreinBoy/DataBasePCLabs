@@ -57,16 +57,16 @@ public class ComputerRepository : BaseRepository
         await readerPCs.CloseAsync(); 
         
         var sqlSoft = @"
-            SELECT cs.""ComputersId"", s.""Id"" AS ""SoftwareId"", s.""Name""
+            SELECT cs.""ComputerId"", s.""Id"" AS ""SoftwareId"", s.""Name""
             FROM ""ComputerSoftware"" cs
-            JOIN ""Softwares"" s ON cs.""InstalledSoftwareId"" = s.""Id""";
+            JOIN ""Softwares"" s ON cs.""SoftwareId"" = s.""Id""";
 
         await using var commandSoft = new NpgsqlCommand(sqlSoft, connection);
         await using var readerSoft = await commandSoft.ExecuteReaderAsync();
 
         while (await readerSoft.ReadAsync())
         {
-            int compId = readerSoft.GetInt32(readerSoft.GetOrdinal("ComputersId"));
+            int compId = readerSoft.GetInt32(readerSoft.GetOrdinal("ComputerId"));
             
             if (compDict.TryGetValue(compId, out var pc))
             {
@@ -196,7 +196,7 @@ public class ComputerRepository : BaseRepository
         await using var connection = CreateConnection();
         await connection.OpenAsync();
         
-        var sql = "SELECT \"InstalledSoftwareId\" FROM \"ComputerSoftware\" WHERE \"ComputersId\" = @ComputerId";
+        var sql = "SELECT \"SoftwareId\" FROM \"ComputerSoftware\" WHERE \"ComputerId\" = @ComputerId";
         
         await using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("ComputerId", computerId);
@@ -220,14 +220,14 @@ public class ComputerRepository : BaseRepository
 
         try
         {
-            var deleteSql = "DELETE FROM \"ComputerSoftware\" WHERE \"ComputersId\" = @ComputerId";
+            var deleteSql = "DELETE FROM \"ComputerSoftware\" WHERE \"ComputerId\" = @ComputerId";
             await using var deleteCommand = new NpgsqlCommand(deleteSql, connection, transaction);
             deleteCommand.Parameters.AddWithValue("ComputerId", computerId);
             await deleteCommand.ExecuteNonQueryAsync();
             
             if (softwareIds.Any())
             {
-                var insertSql = "INSERT INTO \"ComputerSoftware\" (\"ComputersId\", \"InstalledSoftwareId\") VALUES (@ComputerId, @SoftwareId)";
+                var insertSql = "INSERT INTO \"ComputerSoftware\" (\"ComputerId\", \"SoftwareId\") VALUES (@ComputerId, @SoftwareId)";
                 
                 foreach (var softId in softwareIds)
                 {

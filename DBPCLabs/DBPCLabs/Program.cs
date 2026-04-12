@@ -12,6 +12,7 @@ builder.Services.AddScoped<DBPCLabs.Repositories.StudentRepository>();
 builder.Services.AddScoped<DBPCLabs.Repositories.TeacherRepository>();
 builder.Services.AddScoped<DBPCLabs.Repositories.DepartmentRepository>();
 builder.Services.AddScoped<DBPCLabs.Repositories.ReservationRepository>();
+builder.Services.AddScoped<DBPCLabs.Repositories.ComputerSoftwareRepository>();
 // Localization
 builder.Services.AddLocalization();
 // Add services to the container.

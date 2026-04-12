@@ -1,9 +1,11 @@
 ﻿@page "/"
+@using DBPCLabs.Models
 @using DBPCLabs.Repositories
 @inject LaboratoryRepository LabRepo
 @inject ComputerRepository ComputerRepo
 @inject SoftwareRepository SoftwareRepo
-@inject IJSRuntime JS
+@inject ReservationRepository ReservationRepo
+@inject ComputerSoftwareRepository InstallRepo
 
 <PageTitle>UniLab Manager — Головна</PageTitle>
 
@@ -36,42 +38,166 @@
             <p class="text-muted fs-5">Ключові показники вашої інфраструктури в реальному часі</p>
         </div>
 
-        <div class="row g-4 justify-content-center animate-on-scroll">
-            
-            <div class="col-md-4 card-animate-item-1">
-                <div class="dashboard-card shadow-sm p-5 h-100 text-center">
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle icon-container mx-auto mb-4">
-                        <i class="bi bi-door-open fs-1"></i>
-                    </div>
-                    <h2 class="fw-bold text-dark display-4 m-0 mb-1">@labsCount</h2>
-                    <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold tracking-wide">Лабораторій</h6>
-                    <a href="/laboratories" class="btn btn-light text-primary border rounded-pill px-4 py-2 fw-bold w-100 mt-3 hover-btn">Управління</a>
-                </div>
+        @if (isLoading)
+        {
+            <div class="text-center my-5 py-5">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                <p class="mt-3 text-muted fw-bold">Завантаження аналітики...</p>
             </div>
-            
-            <div class="col-md-4 card-animate-item-2">
-                <div class="dashboard-card shadow-sm p-5 h-100 text-center">
-                    <div class="bg-success bg-opacity-10 text-success rounded-circle icon-container mx-auto mb-4">
-                        <i class="bi bi-pc-display fs-1"></i>
+        }
+        else
+        {
+            <div class="row g-4 justify-content-center mb-5 fade-in-up">
+                
+                <div class="col-md-4">
+                    <div class="dashboard-card shadow-sm p-5 h-100 text-center">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle icon-container mx-auto mb-4">
+                            <i class="bi bi-door-open fs-1"></i>
+                        </div>
+                        <h2 class="fw-bold text-dark display-4 m-0 mb-1">@labsCount</h2>
+                        <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold tracking-wide">Лабораторій</h6>
+                        <a href="/laboratories" class="btn btn-light text-primary border rounded-pill px-4 py-2 fw-bold w-100 mt-3 hover-btn">Управління</a>
                     </div>
-                    <h2 class="fw-bold text-dark display-4 m-0 mb-1">@pcsCount</h2>
-                    <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold tracking-wide">Комп'ютерів</h6>
-                    <a href="/computers" class="btn btn-light text-success border rounded-pill px-4 py-2 fw-bold w-100 mt-3 hover-btn">Інвентаризація</a>
                 </div>
-            </div>
-            
-            <div class="col-md-4 card-animate-item-3">
-                <div class="dashboard-card shadow-sm p-5 h-100 text-center">
-                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle icon-container mx-auto mb-4">
-                        <i class="bi bi-disc fs-1"></i>
+                
+                <div class="col-md-4">
+                    <div class="dashboard-card shadow-sm p-5 h-100 text-center">
+                        <div class="bg-success bg-opacity-10 text-success rounded-circle icon-container mx-auto mb-4">
+                            <i class="bi bi-pc-display fs-1"></i>
+                        </div>
+                        <h2 class="fw-bold text-dark display-4 m-0 mb-1">@pcsCount</h2>
+                        <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold tracking-wide">Комп'ютерів</h6>
+                        <a href="/computers" class="btn btn-light text-success border rounded-pill px-4 py-2 fw-bold w-100 mt-3 hover-btn">Інвентаризація</a>
                     </div>
-                    <h2 class="fw-bold text-dark display-4 m-0 mb-1">@softCount</h2>
-                    <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold tracking-wide">Програмного ПЗ</h6>
-                    <a href="/software" class="btn btn-light text-warning border rounded-pill px-4 py-2 fw-bold text-dark w-100 mt-3 hover-btn">Каталог ПЗ</a>
                 </div>
+                
+                <div class="col-md-4">
+                    <div class="dashboard-card shadow-sm p-5 h-100 text-center">
+                        <div class="bg-warning bg-opacity-10 text-warning rounded-circle icon-container mx-auto mb-4">
+                            <i class="bi bi-disc fs-1"></i>
+                        </div>
+                        <h2 class="fw-bold text-dark display-4 m-0 mb-1">@softCount</h2>
+                        <h6 class="text-muted text-uppercase mt-2 mb-4 fw-bold tracking-wide">Програмного ПЗ</h6>
+                        <a href="/software" class="btn btn-light text-warning border rounded-pill px-4 py-2 fw-bold text-dark w-100 mt-3 hover-btn">Каталог ПЗ</a>
+                    </div>
+                </div>
+
             </div>
 
-        </div>
+            <div class="row g-4 fade-in-up align-items-start" style="animation-delay: 0.2s; animation-fill-mode: both;">
+                
+                <div class="col-lg-8">
+                    <div class="dashboard-card shadow-sm d-flex flex-column">
+                        <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white rounded-top-4">
+                            <h4 class="fw-bold text-dark m-0"><i class="bi bi-calendar-check text-primary me-2"></i>Бронювання на сьогодні</h4>
+                            <a href="/reservations" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">Всі записи</a>
+                        </div>
+                        <div class="card-body p-0 flex-grow-1 scrollable-body">
+                            @if (todayReservations != null && todayReservations.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0 align-middle">
+                                        <thead class="text-secondary small text-uppercase fw-bold bg-light" style="position: sticky; top: 0; z-index: 1;">
+                                            <tr>
+                                                <th class="ps-4 py-3 border-0">Час</th>
+                                                <th class="py-3 border-0">Об'єкт</th>
+                                                <th class="py-3 border-0">Статус</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var res in todayReservations)
+                                            {
+                                                var now = DateTime.Now;
+                                                var isPast = res.EndTime < now;
+                                                var isActive = res.StartTime <= now && res.EndTime >= now;
+
+                                                <tr>
+                                                    <td class="ps-4 py-3">
+                                                        <div class="fw-bold text-dark">@res.StartTime.ToString("HH:mm") - @res.EndTime.ToString("HH:mm")</div>
+                                                    </td>
+                                                    <td class="py-3">
+                                                        @if (res.IsGroupReservation)
+                                                        {
+                                                            <div class="fw-bold text-dark">Лаб: @res.LaboratoryName</div>
+                                                            <div class="text-secondary small">Група: @res.GroupName</div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="fw-bold text-dark">ПК: #@res.ComputerName</div>
+                                                            <div class="text-secondary small">@res.StudentName</div>
+                                                        }
+                                                    </td>
+                                                    <td class="py-3">
+                                                        @if (isActive)
+                                                        {
+                                                            <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2"><span class="spinner-grow spinner-grow-sm me-1" role="status" aria-hidden="true"></span> Йде пара</span>
+                                                        }
+                                                        else if (isPast)
+                                                        {
+                                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary rounded-pill px-3 py-2">Завершено</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-info bg-opacity-10 text-primary border border-info rounded-pill px-3 py-2">Очікується</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="p-5 text-center">
+                                    <i class="bi bi-cup-hot text-muted mb-3 d-block" style="font-size: 3rem;"></i>
+                                    <h5 class="text-muted fw-bold">На сьогодні розклад вільний</h5>
+                                    <p class="text-secondary small">Ви можете забронювати аудиторію в системі резервування.</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="dashboard-card shadow-sm d-flex flex-column">
+                        <div class="p-4 border-bottom bg-white rounded-top-4">
+                            <h4 class="fw-bold text-dark m-0"><i class="bi bi-disc text-success me-2"></i>Останнє ПЗ</h4>
+                        </div>
+                        <div class="card-body p-4 flex-grow-1 scrollable-body">
+                            @if (recentInstallations != null && recentInstallations.Any())
+                            {
+                                <div class="position-relative">
+                                    @foreach (var inst in recentInstallations)
+                                    {
+                                        <div class="d-flex mb-4 position-relative z-1">
+                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 45px; height: 45px;">
+                                                <i class="bi bi-download fs-5"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold text-dark mb-1">@inst.SoftwareName <span class="text-muted small fw-normal">(v.@inst.SoftwareVersion)</span></h6>
+                                                <p class="text-secondary small mb-0">ПК #@inst.ComputerInventoryNumber</p>
+                                                <span class="text-muted" style="font-size: 0.75rem;">@inst.InstallationDate.ToString("dd.MM.yyyy")</span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="text-center mt-2">
+                                    <a href="/installations" class="btn btn-sm btn-light rounded-pill px-4 fw-bold">Вся історія</a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-5">
+                                    <p class="text-muted">Журнал інсталяцій порожній.</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        }
     </div>
 </div>
 
@@ -86,11 +212,7 @@
     }
     
     .cards-section {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding-top: 2rem;
+        padding-top: 5rem;
         padding-bottom: 5rem;
     }
 
@@ -108,10 +230,11 @@
         border: 1px solid #edf0f5;
         transition: all 0.4s ease;
         background-color: #ffffff; 
+        overflow: hidden; 
     }
 
     .dashboard-card:hover {
-        transform: translateY(-10px);
+        transform: translateY(-5px);
         box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important;
         border-color: #e2e8f0;
     }
@@ -135,47 +258,69 @@
     }
 
     .fade-in-up {
-        animation: fadeInUp 1s ease-out;
+        animation: fadeInUp 0.8s ease-out forwards;
     }
 
     @@keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
     }
 
-    .animate-on-scroll {
-        opacity: 0;
-        transform: translateY(50px);
-        transition: opacity 1s ease-out, transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    .scrollable-body {
+        max-height: 420px;
+        overflow-y: auto;
     }
-
-    .animate-on-scroll.visible {
-        opacity: 1;
-        transform: translateY(0);
+    
+    .scrollable-body::-webkit-scrollbar {
+        width: 6px;
     }
-
-    .animate-on-scroll.visible .card-animate-item-1 { transition-delay: 0.1s; }
-    .animate-on-scroll.visible .card-animate-item-2 { transition-delay: 0.25s; }
-    .animate-on-scroll.visible .card-animate-item-3 { transition-delay: 0.4s; }
+    
+    .scrollable-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .scrollable-body::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 10px;
+    }
+    
+    .scrollable-body::-webkit-scrollbar-thumb:hover {
+        background-color: #94a3b8;
+    }
 </style>
 
 @code {
+    private bool isLoading = true;
     private int labsCount = 0;
     private int pcsCount = 0;
     private int softCount = 0;
 
+    private List<Reservation>? todayReservations;
+    private List<ComputerSoftware>? recentInstallations;
+
     protected override async Task OnInitializedAsync()
     {
-        labsCount = (await LabRepo.GetAllAsync()).Count;
-        pcsCount = (await ComputerRepo.GetAllAsync()).Count;
-        softCount = (await SoftwareRepo.GetAllAsync()).Count; 
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
+        try 
         {
-            await JS.InvokeVoidAsync("initializeScrollAnimations");
+            labsCount = (await LabRepo.GetAllAsync()).Count;
+            pcsCount = (await ComputerRepo.GetAllAsync()).Count;
+            softCount = (await SoftwareRepo.GetAllAsync()).Count; 
+
+            var allRes = await ReservationRepo.GetAllAsync();
+            todayReservations = allRes
+                .Where(r => r.StartTime.Date == DateTime.Today || r.EndTime.Date == DateTime.Today)
+                .OrderBy(r => r.StartTime)
+                .ToList();
+
+            var allInstalls = await InstallRepo.GetAllAsync();
+            recentInstallations = allInstalls.Take(4).ToList();
+        }
+        catch (Exception)
+        {
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 }

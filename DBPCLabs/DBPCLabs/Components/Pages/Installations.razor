@@ -1,0 +1,100 @@
+﻿@page "/installations"
+@using DBPCLabs.Models
+@using DBPCLabs.Repositories
+@inject ComputerSoftwareRepository InstallRepo
+@inject IJSRuntime JS
+
+<PageTitle>Історія інсталяцій</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark m-0">Історія інсталяцій</h2>
+            <p class="text-muted mt-1 mb-0">Журнал встановленого програмного забезпечення на всіх ПК</p>
+        </div>
+        
+        <div class="d-flex gap-3 align-items-center">
+            <a href="/computers" class="btn btn-outline-secondary rounded-pill px-4 fw-bold shadow-sm bg-white">
+                <i class="bi bi-arrow-left me-2"></i> Назад до парку техніки
+            </a>
+        </div>
+    </div>
+
+    @if (installations == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Завантаження журналу...</p>
+        </div>
+    }
+    else if (!installations.Any())
+    {
+        <div class="shadow-sm p-5 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <i class="bi bi-journal-text text-muted mb-3" style="font-size: 3rem;"></i>
+            <h4 class="text-muted">Журнал інсталяцій порожній</h4>
+            <p class="text-secondary">Встановіть ПЗ через сторінку управління комп'ютерами, щоб записи з'явилися тут.</p>
+        </div>
+    }
+    else
+    {
+        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <div class="table-responsive">
+                <table class="table table-hover border-white mb-0">
+                    <thead class="text-secondary small text-uppercase fw-bold">
+                        <tr>
+                            <th class="py-3 border-0">Дата інсталяції</th>
+                            <th class="py-3 border-0">Комп'ютер</th>
+                            <th class="py-3 border-0">Програма</th>
+                            <th class="py-3 border-0">Версія</th>
+                            <th class="py-3 border-0 text-end">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inst in installations)
+                        {
+                            <tr>
+                                <td class="align-middle text-muted fw-bold">
+                                    <i class="bi bi-calendar-check me-1"></i> @inst.InstallationDate.ToString("dd.MM.yyyy")
+                                </td>
+                                <td class="align-middle fw-bold text-dark">
+                                    <span class="badge bg-primary px-3 py-2 rounded-pill">#@inst.ComputerInventoryNumber</span>
+                                </td>
+                                <td class="align-middle fw-bold text-dark">@inst.SoftwareName</td>
+                                <td class="align-middle text-secondary">v.@inst.SoftwareVersion</td>
+                                <td class="align-middle text-end">
+                                    <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold border" @onclick="() => DeleteInstallation(inst.Id)">
+                                        Скасувати інсталяцію
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<ComputerSoftware>? installations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        installations = await InstallRepo.GetAllAsync();
+    }
+
+    private async Task DeleteInstallation(int id)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Видалити запис про цю інсталяцію з бази?");
+        if (confirm)
+        {
+            await InstallRepo.DeleteAsync(id);
+            await LoadData();
+        }
+    }
+}

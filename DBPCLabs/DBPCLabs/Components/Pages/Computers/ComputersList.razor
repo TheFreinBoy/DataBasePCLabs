@@ -9,9 +9,15 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-dark">Парк комп'ютерної техніки</h2>
-        <a href="/computers/add" class="btn btn-primary rounded-pill px-4 shadow-sm">
-            <i class="bi bi-pc-display"></i> Додати новий ПК
-        </a>
+        
+        <div class="d-flex gap-3 align-items-center">
+            <a href="/installations" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm fw-bold">
+                <i class="bi bi-clock-history me-1"></i> Історія інсталяцій
+            </a>
+            <a href="/computers/add" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">
+                <i class="bi bi-pc-display me-1"></i> Додати новий ПК
+            </a>
+        </div>
     </div>
 
     @if (computers == null)

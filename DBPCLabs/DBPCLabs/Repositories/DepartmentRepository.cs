@@ -3,19 +3,12 @@ using Npgsql;
 
 namespace DBPCLabs.Repositories
 {
-    public class DepartmentRepository
+    public class DepartmentRepository:BaseRepository
     {
-        private readonly IConfiguration _configuration;
-        private readonly string _connectionString;
-
-        public DepartmentRepository(IConfiguration configuration)
+        public DepartmentRepository(IConfiguration configuration) : base(configuration)
         {
-            _configuration = configuration;
-            _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
+            
         }
-
-        private NpgsqlConnection CreateConnection() => new NpgsqlConnection(_connectionString);
-
         public async Task<List<Department>> GetAllAsync()
         {
             var departments = new List<Department>();
