@@ -209,6 +209,37 @@ namespace DBPCLabs.Repositories
             
             await command.ExecuteNonQueryAsync();
         }
+        public async Task UpdateAsync(Reservation res)
+        {
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var sql = @"
+        UPDATE ""Reservations"" SET 
+            ""IsGroupReservation"" = @IsGroup,
+            ""ComputerId"" = @CompId,
+            ""StudentId"" = @StudentId,
+            ""LaboratoryId"" = @LabId,
+            ""GroupId"" = @GroupId,
+            ""TeacherId"" = @TeacherId,
+            ""StartTime"" = @StartTime,
+            ""EndTime"" = @EndTime,
+            ""Purpose"" = @Purpose
+        WHERE ""Id"" = @Id";
+
+            await using var command = new NpgsqlCommand(sql, connection);
+            command.Parameters.AddWithValue("Id", res.Id);
+            command.Parameters.AddWithValue("IsGroup", res.IsGroupReservation);
+            command.Parameters.AddWithValue("CompId", (object?)res.ComputerId ?? DBNull.Value);
+            command.Parameters.AddWithValue("StudentId", (object?)res.StudentId ?? DBNull.Value);
+            command.Parameters.AddWithValue("LabId", (object?)res.LaboratoryId ?? DBNull.Value);
+            command.Parameters.AddWithValue("GroupId", (object?)res.GroupId ?? DBNull.Value);
+            command.Parameters.AddWithValue("TeacherId", (object?)res.TeacherId ?? DBNull.Value);
+            command.Parameters.AddWithValue("StartTime", res.StartTime);
+            command.Parameters.AddWithValue("EndTime", res.EndTime);
+            command.Parameters.AddWithValue("Purpose", (object?)res.Purpose ?? DBNull.Value);
+
+            await command.ExecuteNonQueryAsync();
+        }
 
         public async Task DeleteAsync(int id)
         {

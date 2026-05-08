@@ -34,21 +34,23 @@
                 <NavLink class="custom-btn" href="reservations">
                     Резервування
                 </NavLink>
+                <NavLink class="custom-btn" href="schedule">
+                    Розклад
+                </NavLink>
+                <button class="btn btn-link text-decoration-none p-0 transition-all" @onclick="ToggleTheme" title="Змінити тему оформлення">
+                    @if (isDarkMode)
+                    {
+                        <i class="bi bi-sun-fill text-warning" style="font-size: 1.6rem; filter: drop-shadow(0 0 5px rgba(255, 193, 7, 0.5));"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-moon-stars-fill text-light hover-opacity" style="font-size: 1.4rem;"></i>
+                    }
+                </button>
             </div>
         </div>
         
-        <div class="d-flex align-items-center">
-            <button class="btn btn-link text-decoration-none p-0 transition-all" @onclick="ToggleTheme" title="Змінити тему оформлення">
-                @if (isDarkMode)
-                {
-                    <i class="bi bi-sun-fill text-warning" style="font-size: 1.6rem; filter: drop-shadow(0 0 5px rgba(255, 193, 7, 0.5));"></i>
-                }
-                else
-                {
-                    <i class="bi bi-moon-stars-fill text-light hover-opacity" style="font-size: 1.4rem;"></i>
-                }
-            </button>
-        </div>
+        
 
     </div>
 </nav>

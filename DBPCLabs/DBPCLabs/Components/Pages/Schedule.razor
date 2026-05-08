@@ -1,0 +1,217 @@
+﻿@page "/schedule"
+@using DBPCLabs.Models
+@using DBPCLabs.Repositories
+@inject ReservationRepository ReservationRepo
+
+<PageTitle>Розклад лабораторій</PageTitle>
+
+<div class="container-fluid mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark m-0"><i class="bi bi-calendar-week text-primary me-2"></i>Тижневий розклад</h2>
+            <p class="text-muted mt-1 mb-0">Графік завантаженості комп'ютерів та лабораторій</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 bg-white p-2 rounded-pill shadow-sm border">
+            <button class="btn btn-sm btn-light rounded-circle" @onclick="PrevWeek">
+                <i class="bi bi-chevron-left fw-bold"></i>
+            </button>
+            <span class="fw-bold text-dark px-3">
+                @startOfWeek.ToString("dd.MM") - @startOfWeek.AddDays(6).ToString("dd.MM.yyyy")
+            </span>
+            <button class="btn btn-sm btn-light rounded-circle" @onclick="NextWeek">
+                <i class="bi bi-chevron-right fw-bold"></i>
+            </button>
+            <button class="btn btn-sm btn-primary rounded-pill px-3 ms-2 fw-bold" @onclick="CurrentWeek">Сьогодні</button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+    <div class="text-center mt-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted fw-bold">Завантаження розкладу...</p>
+    </div>
+    }
+    else
+    {
+    <div class="schedule-wrapper shadow-sm rounded-4 bg-white border fade-in-up p-0 overflow-hidden">
+        <div class="table-responsive m-0">
+            <table class="table table-bordered mb-0 schedule-table">
+                <thead class="bg-light">
+                <tr>
+                    <th class="time-col-header text-center align-middle bg-light border-bottom-0" style="width: 100px; min-width: 100px;">
+                        <span class="text-muted small fw-bold text-uppercase">Пара</span>
+                    </th>
+                    @for (int i = 0; i < 7; i++)
+                    {
+                    var currentDate = startOfWeek.AddDays(i);
+                    var isToday = currentDate.Date == DateTime.Today;
+                    <th class="text-center p-3 border-bottom-0 @(isToday ? "bg-primary text-white" : "bg-light text-dark")" style="min-width: 180px;">
+                        <span class="d-block small text-uppercase opacity-75">@currentDate.ToString("dddd", new System.Globalization.CultureInfo("uk-UA"))</span>
+                        <span class="fs-5 fw-bold">@currentDate.ToString("dd.MM")</span>
+                    </th>
+                    }
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var period in periods)
+                {
+                <tr>
+                    <td class="text-center align-middle bg-light border-end">
+                        <div class="fw-bold text-dark fs-4">@period.Number</div>
+                        <div class="text-muted fw-bold" style="font-size: 0.75rem;">
+                            @period.Start.ToString(@"hh\:mm")<br />-<br />@period.End.ToString(@"hh\:mm")
+                        </div>
+                    </td>
+
+                    @for (int i = 0; i < 7; i++)
+                    {
+                    var currentDate = startOfWeek.AddDays(i);
+                    
+                    var cellReservations = weekReservations
+                    .Where(r => r.StartTime.Date == currentDate.Date &&
+                    ((r.StartTime.TimeOfDay >= period.Start && r.StartTime.TimeOfDay < period.End) ||
+                    (period.Start >= r.StartTime.TimeOfDay && period.Start < r.EndTime.TimeOfDay)))
+                    .ToList();
+
+                    <td class="p-2 align-top day-cell">
+                        @if (cellReservations.Any())
+                        {
+                        var groupedLabs = cellReservations
+                        .Where(r => r.IsGroupReservation)
+                        .GroupBy(r => new { r.LaboratoryName, r.TeacherName });
+
+                        foreach (var group in groupedLabs)
+                        {
+                            string groupsList = string.Join(", ", group.Select(g => g.GroupName));
+
+                            <div class="reservation-card border-warning bg-warning bg-opacity-10 mb-2">
+                                <div class="fw-bold text-dark small"><i class="bi bi-people-fill me-1"></i> Групи: @groupsList</div>
+                                <div class="text-secondary mt-1" style="font-size: 0.75rem;">Лаб: @group.Key.LaboratoryName</div>
+
+                                @if (!string.IsNullOrEmpty(group.Key.TeacherName))
+                                {
+                                <div class="mt-1 pt-1 border-top border-warning border-opacity-25" style="font-size: 0.7rem; color: #64748b;">
+                                    Викл: @group.Key.TeacherName
+                                </div>
+                                }
+                            </div>
+                        }
+
+                        
+                        var individuals = cellReservations.Where(r => !r.IsGroupReservation);
+                        foreach (var ind in individuals)
+                        {
+                        <div class="reservation-card border-info bg-info bg-opacity-10 mb-2">
+                            <div class="fw-bold text-dark small"><i class="bi bi-person-fill me-1"></i> @ind.StudentName</div>
+                            <div class="text-secondary mt-1" style="font-size: 0.75rem;">ПК: #@ind.ComputerName</div>
+                        </div>
+                        }
+                        }
+                        else
+                        {
+                        <div class="h-100 d-flex align-items-center justify-content-center opacity-25">
+                            <i class="bi bi-dash"></i>
+                        </div>
+                        }
+                    </td>
+                    }
+                </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    }
+</div>
+
+<style>
+    .schedule-table {
+        table-layout: fixed;
+    }
+
+    .schedule-table th, .schedule-table td {
+        border-color: #edf0f5;
+    }
+
+    .day-cell {
+        min-height: 120px;
+    }
+
+    .reservation-card {
+        padding: 8px 10px;
+        border-radius: 6px;
+        border-left: 4px solid;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        transition: transform 0.2s ease;
+    }
+
+    .reservation-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    @@keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(15px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+@code {
+    private bool isLoading = true;
+    private DateTime startOfWeek;
+    private List<Reservation> weekReservations = new();
+
+
+    private List<ClassPeriod> periods = new()
+    {
+        new ClassPeriod { Number = 1, Start = new TimeSpan(8, 0, 0), End = new TimeSpan(9, 20, 0) },
+        new ClassPeriod { Number = 2, Start = new TimeSpan(9, 40, 0), End = new TimeSpan(11, 0, 0) },
+        new ClassPeriod { Number = 3, Start = new TimeSpan(11, 20, 0), End = new TimeSpan(12, 40, 0) },
+        new ClassPeriod { Number = 4, Start = new TimeSpan(13, 0, 0), End = new TimeSpan(14, 20, 0) },
+        new ClassPeriod { Number = 5, Start = new TimeSpan(14, 40, 0), End = new TimeSpan(16, 0, 0) },
+        new ClassPeriod { Number = 6, Start = new TimeSpan(16, 20, 0), End = new TimeSpan(17, 40, 0) }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        CalculateStartOfWeek(DateTime.Today);
+        await LoadSchedule();
+    }
+
+    private void CalculateStartOfWeek(DateTime date)
+    {
+        int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
+        startOfWeek = date.AddDays(-1 * diff).Date;
+    }
+
+    private async Task LoadSchedule()
+    {
+        isLoading = true;
+        DateTime endOfWeek = startOfWeek.AddDays(7);
+
+        var allRes = await ReservationRepo.GetAllAsync();
+
+        weekReservations = allRes
+        .Where(r => r.StartTime < endOfWeek && r.EndTime >= startOfWeek)
+        .ToList();
+
+        isLoading = false;
+    }
+
+    private async Task PrevWeek() { startOfWeek = startOfWeek.AddDays(-7); await LoadSchedule(); }
+    private async Task NextWeek() { startOfWeek = startOfWeek.AddDays(7); await LoadSchedule(); }
+    private async Task CurrentWeek() { CalculateStartOfWeek(DateTime.Today); await LoadSchedule(); }
+
+
+    private class ClassPeriod
+    {
+        public int Number { get; set; }
+        public TimeSpan Start { get; set; }
+        public TimeSpan End { get; set; }
+    }
+}
