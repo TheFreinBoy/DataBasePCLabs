@@ -6,15 +6,14 @@
 
 <PageTitle>Кафедри та Факультети</PageTitle>
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold text-dark m-0">Структура університету</h2>
-      
         </div>
         
         <div class="d-flex gap-3 align-items-center">
-            @if (!showForm)
+            @if (!_showForm)
             {
                 <button class="btn btn-primary rounded-pill px-4 py-2 shadow-sm fw-bold" @onclick="ShowAddForm">
                     Додати кафедру
@@ -23,29 +22,29 @@
         </div>
     </div>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
+    @if (!string.IsNullOrEmpty(_errorMessage))
     {
         <div class="alert alert-danger shadow-sm rounded-3 d-flex align-items-center mb-4">
-            <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i> @errorMessage
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i> @_errorMessage
         </div>
     }
 
-    @if (showForm)
+    @if (_showForm)
     {
-        <div class="shadow-sm p-4 mb-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
-            <h4 class="fw-bold text-dark mb-4">@(isEditing ? "Редагування кафедри" : "Створення нової кафедри")</h4>
-            <EditForm Model="currentDepartment" OnValidSubmit="SaveDepartment">
+        <div class="shadow-sm p-4 mb-4 fade-in-up" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+            <h4 class="fw-bold text-dark mb-4">@(_isEditing ? "Редагування кафедри" : "Створення нової кафедри")</h4>
+            <EditForm Model="_currentDepartment" OnValidSubmit="SaveDepartment">
                 <DataAnnotationsValidator />
                 <div class="row g-4">
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark">Назва кафедри</label>
-                        <InputText @bind-Value="currentDepartment.Name" class="form-control form-control-lg bg-light" placeholder="напр. Кафедра інженерії програмного забезпечення" />
-                        <ValidationMessage For="@(() => currentDepartment.Name)" class="text-danger small mt-1 fw-bold" />
+                        <InputText @bind-Value="_currentDepartment.Name" class="form-control form-control-lg bg-light" placeholder="напр. Кафедра інженерії програмного забезпечення" />
+                        <ValidationMessage For="@(() => _currentDepartment.Name)" class="text-danger small mt-1 fw-bold" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark">Факультет / Інститут</label>
-                        <InputText @bind-Value="currentDepartment.Faculty" class="form-control form-control-lg bg-light" placeholder="напр. ФОТІУС, ФІТ..." />
-                        <ValidationMessage For="@(() => currentDepartment.Faculty)" class="text-danger small mt-1 fw-bold" />
+                        <InputText @bind-Value="_currentDepartment.Faculty" class="form-control form-control-lg bg-light" placeholder="напр. ФОТІУС, ФІТ..." />
+                        <ValidationMessage For="@(() => _currentDepartment.Faculty)" class="text-danger small mt-1 fw-bold" />
                     </div>
                 </div>
                 <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-3">
@@ -58,14 +57,14 @@
         </div>
     }
 
-    @if (departments == null)
+    @if (_departments == null)
     {
         <div class="text-center mt-5">
             <div class="spinner-border text-primary" role="status"></div>
             <p class="mt-2 text-muted">Завантаження структури...</p>
         </div>
     }
-    else if (!departments.Any())
+    else if (!_departments.Any())
     {
         <div class="shadow-sm p-5 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
             <i class="bi bi-building text-muted mb-3" style="font-size: 3rem;"></i>
@@ -75,7 +74,7 @@
     }
     else
     {
-        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+        <div class="shadow-sm p-4 fade-in-up" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
             <div class="table-responsive">
                 <table class="table table-hover border-white mb-0">
                     <thead class="text-secondary small text-uppercase fw-bold">
@@ -87,7 +86,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var dep in departments)
+                        @foreach (var dep in PaginatedDepartments)
                         {
                             <tr>
                                 <td class="align-middle text-muted fw-bold">#@dep.Id</td>
@@ -97,27 +96,74 @@
                                         @dep.Faculty
                                     </span>
                                 </td>
-                                <td class="align-middle text-end">
-                                    <div class="d-flex justify-content-end align-items-center gap-2 flex-nowrap">
-                                        <button class="btn btn-sm btn-light text-success rounded-pill px-3 fw-bold border" @onclick="() => EditDepartment(dep)">Редагувати</button>
-                                        <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold border" @onclick="() => DeleteDepartment(dep.Id)">Видалити</button>
-                                    </div>
+                                <td class="align-middle text-end text-nowrap">
+                                    <button class="btn btn-sm btn-light text-success rounded-pill px-3 fw-bold border me-2" @onclick="() => EditDepartment(dep)">Редагувати</button>
+                                    <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold border" @onclick="() => DeleteDepartment(dep.Id)">Видалити</button>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
+            
+            @if (TotalPages > 1)
+            {
+                <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination mb-0 shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                            <li class="page-item @(_currentPage == 1 ? "disabled" : "")">
+                                <button class="page-link text-primary fw-bold" @onclick="() => GoToPage(_currentPage - 1)">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                            </li>
+                            
+                            @for (int i = 1; i <= TotalPages; i++)
+                            {
+                                int pageNumber = i; 
+                                <li class="page-item @(_currentPage == pageNumber ? "active" : "")">
+                                    <button class="page-link fw-bold" @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                                </li>
+                            }
+                            
+                            <li class="page-item @(_currentPage == TotalPages ? "disabled" : "")">
+                                <button class="page-link text-primary fw-bold" @onclick="() => GoToPage(_currentPage + 1)">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
         </div>
     }
 </div>
 
+<style>
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    @@keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(15px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
 @code {
-    private List<Department>? departments;
-    private Department currentDepartment = new();
-    private bool showForm = false;
-    private bool isEditing = false;
-    private string? errorMessage;
+    private List<Department>? _departments;
+    private Department _currentDepartment = new();
+    private bool _showForm;
+    private bool _isEditing;
+    private string? _errorMessage;
+
+
+    private int _currentPage = 1;
+    private readonly int _pageSize = 10; 
+
+    private int TotalPages => _departments != null ? (int)Math.Ceiling((double)_departments.Count / _pageSize) : 0;
+
+    private IEnumerable<Department> PaginatedDepartments => 
+        _departments?.Skip((_currentPage - 1) * _pageSize).Take(_pageSize) ?? Array.Empty<Department>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -126,56 +172,74 @@
 
     private async Task LoadData()
     {
-        departments = await DepartmentRepo.GetAllAsync();
+        _departments = await DepartmentRepo.GetAllAsync();
+        
+        if (_departments != null)
+        {
+            _departments = _departments.OrderBy(d => d.Name).ToList();
+        }
+        
+        if (_currentPage > TotalPages && TotalPages > 0)
+        {
+            _currentPage = TotalPages;
+        }
+    }
+
+    private void GoToPage(int page)
+    {
+        if (page >= 1 && page <= TotalPages)
+        {
+            _currentPage = page;
+        }
     }
 
     private void ShowAddForm()
     {
-        errorMessage = null;
-        currentDepartment = new Department(); 
-        isEditing = false;
-        showForm = true;
+        _errorMessage = null;
+        _currentDepartment = new Department(); 
+        _isEditing = false;
+        _showForm = true;
     }
 
     private void EditDepartment(Department dep)
     {
-        errorMessage = null;
-        currentDepartment = new Department 
+        _errorMessage = null;
+        _currentDepartment = new Department 
         { 
             Id = dep.Id, 
             Name = dep.Name, 
             Faculty = dep.Faculty 
         };
-        isEditing = true;
-        showForm = true;
+        _isEditing = true;
+        _showForm = true;
     }
 
     private void CancelForm()
     {
-        showForm = false;
-        errorMessage = null;
+        _showForm = false;
+        _errorMessage = null;
     }
 
     private async Task SaveDepartment()
     {
-        errorMessage = null;
+        _errorMessage = null;
 
-        if (isEditing)
+        if (_isEditing)
         {
-            await DepartmentRepo.UpdateAsync(currentDepartment);
+            await DepartmentRepo.UpdateAsync(_currentDepartment);
         }
         else
         {
-            await DepartmentRepo.AddAsync(currentDepartment);
+            await DepartmentRepo.AddAsync(_currentDepartment);
         }
 
         await LoadData(); 
-        showForm = false;   
+        _showForm = false;   
     }
 
     private async Task DeleteDepartment(int id)
     {
-        errorMessage = null;
+        _errorMessage = null;
         bool confirm = await JS.InvokeAsync<bool>("confirm", "Видалити цю кафедру? Увага: якщо до неї прив'язані викладачі або групи, видалення буде заблоковано системою.");
         
         if (confirm)
@@ -187,7 +251,7 @@
             }
             catch (Exception)
             {
-                errorMessage = "Помилка: Ця кафедра вже використовується! Спочатку видаліть або переведіть на іншу кафедру всіх пов'язаних викладачів та групи.";
+                _errorMessage = "Помилка: Ця кафедра вже використовується! Спочатку видаліть або переведіть на іншу кафедру всіх пов'язаних викладачів та групи.";
             }
         }
     }

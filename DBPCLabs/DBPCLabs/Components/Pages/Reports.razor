@@ -1,0 +1,310 @@
+﻿@page "/reports"
+@using DBPCLabs.Models
+@using DBPCLabs.Repositories
+@inject ReservationRepository ReservationRepo
+@inject LaboratoryRepository LabRepo
+@inject IJSRuntime JS
+
+<PageTitle>Звіти та Аналітика</PageTitle>
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <h2 class="fw-bold text-dark m-0"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Аналітика завантаженості</h2>
+            <p class="text-muted mt-1 mb-0">Формування звітів та розрахунок ефективності використання лабораторій</p>
+        </div>
+        <button class="btn btn-primary rounded-pill px-4 py-2 shadow-sm fw-bold" @onclick="PrintReport">
+            <i class="bi bi-printer me-2"></i> Роздрукувати / PDF
+        </button>
+    </div>
+
+    <div class="shadow-sm p-4 mb-4 bg-white rounded-4 border no-print">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-sliders me-2"></i>Параметри звіту</h5>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-secondary">Дата початку періоду</label>
+                <input type="date" class="form-control form-control-lg bg-light" @bind="_fromDate" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-secondary">Дата завершення періоду</label>
+                <input type="date" class="form-control form-control-lg bg-light" @bind="_toDate" />
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-success rounded-pill btn-lg w-100 fw-bold shadow-sm" @onclick="GenerateReport">
+                    <i class="bi bi-gear-fill me-2"></i> Сформувати звіт
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="print-only text-center mb-5">
+        <h2 class="fw-bold m-0">ЗВІТ ПРО ЗАВАНТАЖЕНІСТЬ КОМП'ЮТЕРНИХ ЛАБОРАТОРІЙ</h2>
+        <p class="text-muted mt-2 fs-5">За період з @_fromDate.ToString("dd.MM.yyyy") по @_toDate.ToString("dd.MM.yyyy")</p>
+        <hr />
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="text-center my-5 py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted fw-bold">Збір даних та розрахунок статистики...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4 mb-4 fade-in-up">
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card shadow-sm p-4 text-center bg-white border rounded-4">
+                    <div class="text-muted small text-uppercase fw-bold mb-2">Всього занять (пар)</div>
+                    <h2 class="fw-bold text-dark m-0">@_totalReservationsCount</h2>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card shadow-sm p-4 text-center bg-white border rounded-4">
+                    <div class="text-muted small text-uppercase fw-bold mb-2">Сумарно годин роботи</div>
+                    <h2 class="fw-bold text-primary m-0">@Math.Round(_totalHoursOccupied, 1) год</h2>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card shadow-sm p-4 text-center bg-white border rounded-4">
+                    <div class="text-muted small text-uppercase fw-bold mb-2">Найбільш завантажена</div>
+                    <h2 class="fw-bold text-danger m-0" style="font-size: 1.5rem;">@(_mostLoadedLab ?? "—")</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="shadow-sm bg-white border rounded-4 overflow-hidden fade-in-up">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-secondary small text-uppercase fw-bold">
+                        <tr>
+                            <th class="ps-4 py-3 border-0">Лабораторія / Ауд.</th>
+                            <th class="py-3 border-0 text-center">Групові пари</th>
+                            <th class="py-3 border-0 text-center">Індивід. бронювання</th>
+                            <th class="py-3 border-0 text-center">Годин проведено</th>
+                            <th class="py-3 border-0 pe-4" style="width: 300px;">Коефіцієнт завантаження</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _reportItems)
+                        {
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <div class="fw-bold text-dark">@item.LabName</div>
+                                    <small class="text-muted">Аудиторія: @item.RoomNumber</small>
+                                </td>
+                                <td class="text-center py-3 fw-bold text-secondary">@item.GroupCount</td>
+                                <td class="text-center py-3 fw-bold text-secondary">@item.IndividualCount</td>
+                                <td class="text-center py-3 fw-bold text-primary">@Math.Round(item.HoursOccupied, 1) год</td>
+                                <td class="pe-4 py-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-grow-1" style="height: 10px; border-radius: 10px; background-color: #f1f5f9;">
+                                            <div class="progress-bar @item.ProgressBarClass" 
+                                                 role="progressbar" 
+                                                 style="width: @(item.WorkloadPercentage)%; border-radius: 10px;">
+                                            </div>
+                                        </div>
+                                        <span class="fw-bold text-dark small" style="min-width: 45px; text-align: right;">@Math.Round(item.WorkloadPercentage, 1)%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="print-only text-end mt-5 pt-5">
+            <p class="m-0 fw-bold">Дата формування звіту: @DateTime.Now.ToString("dd.MM.yyyy HH:mm")</p>
+            <p class="text-muted mt-5" style="border-top: 1px solid #000; display: inline-block; width: 250px; text-align: center;">Підпис відповідальної особи</p>
+        </div>
+    }
+</div>
+
+<style>
+    .dashboard-card {
+        border-radius: 16px;
+        border: 1px solid #edf0f5;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    @@keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(15px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    
+    .print-only {
+        display: none;
+    }
+
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+        .print-only {
+            display: block !important;
+        }
+        
+        nav, header, .navbar, .top-row, .sidebar, footer {
+            display: none !important;
+        }
+        
+        .main, main, .page, .content {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        body {
+            background-color: #fff !important;
+            color: #000 !important;
+        }
+
+        .shadow-sm {
+            box-shadow: none !important;
+            border: 1px solid #dee2e6 !important; 
+        }
+
+        .container, .container-fluid {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .print-only.mb-5 { margin-bottom: 15px !important; }
+        .print-only h2 { font-size: 1.5rem !important; margin-bottom: 5px !important; }
+        .print-only p { font-size: 1rem !important; margin: 0 0 10px 0 !important; }
+        .print-only hr { margin: 10px 0 !important; }
+        
+        .row.g-4.mb-4 {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            margin-bottom: 20px !important;
+            gap: 15px !important;
+        }
+        .row.g-4.mb-4 > div {
+            width: 33.33% !important;
+            padding: 0 !important;
+            flex: 1 !important;
+        }
+        
+        .dashboard-card {
+            padding: 10px !important; 
+            border-radius: 8px !important;
+        }
+        .dashboard-card h2 { font-size: 1.25rem !important; }
+        .dashboard-card .mb-2 { margin-bottom: 5px !important; font-size: 0.75rem !important; }
+        
+        .table th, .table td {
+            padding: 8px 10px !important;
+            font-size: 0.9rem !important;
+        }
+
+        .mt-5.pt-5 { margin-top: 30px !important; padding-top: 0 !important; }
+    }
+</style>
+
+@code {
+    private bool _isLoading = true;
+    private DateTime _fromDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1); 
+    private DateTime _toDate = DateTime.Today;
+    
+    private int _totalReservationsCount = 0;
+    private double _totalHoursOccupied = 0;
+    private string? _mostLoadedLab;
+
+    private readonly List<LabReportItem> _reportItems = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GenerateReport();
+    }
+
+    private async Task GenerateReport()
+    {
+        _isLoading = true;
+        _reportItems.Clear();
+        _totalHoursOccupied = 0;
+        
+        var labs = await LabRepo.GetAllAsync();
+        var allReservations = await ReservationRepo.GetAllAsync();
+        
+        var filteredReservations = allReservations
+            .Where(r => r.StartTime.Date >= _fromDate.Date && r.EndTime.Date <= _toDate.Date)
+            .ToList();
+
+        _totalReservationsCount = filteredReservations.Count;
+        
+        double totalDays = (_toDate.Date - _fromDate.Date).TotalDays + 1;
+        double maxWorkingHours = totalDays * 8; 
+        if (maxWorkingHours <= 0) maxWorkingHours = 8;
+
+        foreach (var lab in labs)
+        {
+            var labRes = filteredReservations.Where(r => r.LaboratoryId == lab.Id || 
+                         (r.ComputerId != null && filteredReservations.Any(fr => fr.Id == r.Id && fr.LaboratoryName == lab.Name))).ToList();
+            
+            var labResAll = filteredReservations.Where(r => 
+                (r.IsGroupReservation && r.LaboratoryId == lab.Id) || 
+                (!r.IsGroupReservation && allReservations.Any(ar => ar.Id == r.Id && ar.LaboratoryName == lab.Name))
+            ).ToList();
+
+            double hours = 0;
+            int groups = 0;
+            int individuals = 0;
+
+            foreach (var res in labResAll)
+            {
+                hours += (res.EndTime - res.StartTime).TotalHours;
+                if (res.IsGroupReservation) groups++;
+                else individuals++;
+            }
+
+            _totalHoursOccupied += hours;
+            
+            double percentage = (hours / maxWorkingHours) * 100;
+            if (percentage > 100) percentage = 100;
+            
+            string barClass = "bg-success";
+            if (percentage > 70) barClass = "bg-danger";
+            else if (percentage > 40) barClass = "bg-warning";
+
+            _reportItems.Add(new LabReportItem
+            {
+                LabName = lab.Name,
+                RoomNumber = lab.RoomNumber,
+                GroupCount = groups,
+                IndividualCount = individuals,
+                HoursOccupied = hours,
+                WorkloadPercentage = percentage,
+                ProgressBarClass = barClass
+            });
+        }
+        
+        var topLab = _reportItems.OrderByDescending(i => i.HoursOccupied).FirstOrDefault();
+        _mostLoadedLab = topLab != null && topLab.HoursOccupied > 0 ? $"{topLab.LabName} (ауд. {topLab.RoomNumber})" : "Немає занять";
+
+        _isLoading = false;
+    }
+
+    private async Task PrintReport()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+    
+    private class LabReportItem
+    {
+        public string LabName { get; set; } = "";
+        public string RoomNumber { get; set; } = "";
+        public int GroupCount { get; set; }
+        public int IndividualCount { get; set; }
+        public double HoursOccupied { get; set; }
+        public double WorkloadPercentage { get; set; }
+        public string ProgressBarClass { get; set; } = "bg-primary";
+    }
+}

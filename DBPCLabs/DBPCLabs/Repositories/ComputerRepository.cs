@@ -212,38 +212,60 @@ public class ComputerRepository : BaseRepository
     }
     
     public async Task UpdateInstalledSoftwareAsync(int computerId, HashSet<int> softwareIds)
-    {
-        await using var connection = CreateConnection();
-        await connection.OpenAsync();
-        
-        await using var transaction = await connection.BeginTransactionAsync();
+{
+    await using var connection = CreateConnection();
+    await connection.OpenAsync();
+    
+    await using var transaction = await connection.BeginTransactionAsync();
 
-        try
+    try
+    {
+        var existingIds = new HashSet<int>();
+        var selectSql = "SELECT \"SoftwareId\" FROM \"ComputerSoftware\" WHERE \"ComputerId\" = @ComputerId";
+        await using (var selectCommand = new NpgsqlCommand(selectSql, connection, transaction))
         {
-            var deleteSql = "DELETE FROM \"ComputerSoftware\" WHERE \"ComputerId\" = @ComputerId";
-            await using var deleteCommand = new NpgsqlCommand(deleteSql, connection, transaction);
-            deleteCommand.Parameters.AddWithValue("ComputerId", computerId);
-            await deleteCommand.ExecuteNonQueryAsync();
-            
-            if (softwareIds.Any())
+            selectCommand.Parameters.AddWithValue("ComputerId", computerId);
+            await using var reader = await selectCommand.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
             {
-                var insertSql = "INSERT INTO \"ComputerSoftware\" (\"ComputerId\", \"SoftwareId\") VALUES (@ComputerId, @SoftwareId)";
-                
-                foreach (var softId in softwareIds)
-                {
-                    await using var insertCommand = new NpgsqlCommand(insertSql, connection, transaction);
-                    insertCommand.Parameters.AddWithValue("ComputerId", computerId);
-                    insertCommand.Parameters.AddWithValue("SoftwareId", softId);
-                    await insertCommand.ExecuteNonQueryAsync();
-                }
+                existingIds.Add(reader.GetInt32(0));
             }
-            
-            await transaction.CommitAsync();
         }
-        catch
+        
+        var toRemove = existingIds.Except(softwareIds).ToList();
+        
+        var toAdd = softwareIds.Except(existingIds).ToList();
+        
+        if (toRemove.Any())
         {
-            await transaction.RollbackAsync();
-            throw;
+            var deleteSql = "DELETE FROM \"ComputerSoftware\" WHERE \"ComputerId\" = @ComputerId AND \"SoftwareId\" = @SoftwareId";
+            foreach (var softId in toRemove)
+            {
+                await using var deleteCommand = new NpgsqlCommand(deleteSql, connection, transaction);
+                deleteCommand.Parameters.AddWithValue("ComputerId", computerId);
+                deleteCommand.Parameters.AddWithValue("SoftwareId", softId);
+                await deleteCommand.ExecuteNonQueryAsync();
+            }
         }
+        
+        if (toAdd.Any())
+        {
+            var insertSql = "INSERT INTO \"ComputerSoftware\" (\"ComputerId\", \"SoftwareId\") VALUES (@ComputerId, @SoftwareId)";
+            foreach (var softId in toAdd)
+            {
+                await using var insertCommand = new NpgsqlCommand(insertSql, connection, transaction);
+                insertCommand.Parameters.AddWithValue("ComputerId", computerId);
+                insertCommand.Parameters.AddWithValue("SoftwareId", softId);
+                await insertCommand.ExecuteNonQueryAsync();
+            }
+        }
+        
+        await transaction.CommitAsync();
     }
+    catch
+    {
+        await transaction.RollbackAsync();
+        throw;
+    }
+}
 }

@@ -2,6 +2,7 @@
 @using DBPCLabs.Models
 @using DBPCLabs.Repositories
 @inject ReservationRepository ReservationRepo
+@inject LaboratoryRepository LabRepo
 
 <PageTitle>Розклад лабораторій</PageTitle>
 
@@ -80,15 +81,22 @@
                         {
                         var groupedLabs = cellReservations
                         .Where(r => r.IsGroupReservation)
-                        .GroupBy(r => new { r.LaboratoryName, r.TeacherName });
+                        .GroupBy(r => new { r.LaboratoryId, r.LaboratoryName, r.TeacherName });
 
                         foreach (var group in groupedLabs)
                         {
                             string groupsList = string.Join(", ", group.Select(g => g.GroupName));
+                            
+                            var currentLab = _labs?.FirstOrDefault(l => l.Id == group.Key.LaboratoryId);
+                            string roomText = currentLab != null && !string.IsNullOrEmpty(currentLab.RoomNumber) 
+                                              ? $"(Ауд. {currentLab.RoomNumber})" 
+                                              : "";
 
                             <div class="reservation-card border-warning bg-warning bg-opacity-10 mb-2">
                                 <div class="fw-bold text-dark small"><i class="bi bi-people-fill me-1"></i> Групи: @groupsList</div>
-                                <div class="text-secondary mt-1" style="font-size: 0.75rem;">Лаб: @group.Key.LaboratoryName</div>
+                                <div class="text-secondary mt-1" style="font-size: 0.75rem;">
+                                    Лаб: @group.Key.LaboratoryName <span class="fw-bold text-dark opacity-75">@roomText</span>
+                                </div>
 
                                 @if (!string.IsNullOrEmpty(group.Key.TeacherName))
                                 {
@@ -98,7 +106,6 @@
                                 }
                             </div>
                         }
-
                         
                         var individuals = cellReservations.Where(r => !r.IsGroupReservation);
                         foreach (var ind in individuals)
@@ -165,7 +172,7 @@
     private bool isLoading = true;
     private DateTime startOfWeek;
     private List<Reservation> weekReservations = new();
-
+    private List<DBPCLabs.Models.Laboratory>? _labs; 
 
     private List<ClassPeriod> periods = new()
     {
@@ -179,6 +186,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _labs = await LabRepo.GetAllAsync();
+        
         CalculateStartOfWeek(DateTime.Today);
         await LoadSchedule();
     }
@@ -206,7 +215,6 @@
     private async Task PrevWeek() { startOfWeek = startOfWeek.AddDays(-7); await LoadSchedule(); }
     private async Task NextWeek() { startOfWeek = startOfWeek.AddDays(7); await LoadSchedule(); }
     private async Task CurrentWeek() { CalculateStartOfWeek(DateTime.Today); await LoadSchedule(); }
-
 
     private class ClassPeriod
     {

@@ -11,7 +11,7 @@
 
 <PageTitle>Резервування лабораторій</PageTitle>
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold text-dark m-0">Резервування ПК та Аудиторій</h2>
@@ -19,7 +19,7 @@
         </div>
         
         <div class="d-flex gap-3 align-items-center">
-            @if (!showForm)
+            @if (!_showForm)
             {
                 <button class="btn btn-primary rounded-pill px-4 py-2 shadow-sm fw-bold" @onclick="ShowAddForm">
                     Нове бронювання
@@ -28,52 +28,52 @@
         </div>
     </div>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
+    @if (!string.IsNullOrEmpty(_errorMessage))
     {
         <div class="alert alert-danger shadow-sm rounded-3 d-flex align-items-center mb-4">
-            <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i> @errorMessage
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i> @_errorMessage
         </div>
     }
 
-    @if (showForm)
+    @if (_showForm)
     {
         <div class="shadow-sm p-4 mb-4 fade-in-up" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
             
             <h4 class="fw-bold text-dark mb-4 text-center">
-                @(currentReservation.Id == 0 ? "Створення нового бронювання" : $"Редагування бронювання #{currentReservation.Id}")
+                @(_currentReservation.Id == 0 ? "Створення нового бронювання" : $"Редагування бронювання #{_currentReservation.Id}")
             </h4>
 
             <div class="d-flex justify-content-center mb-4">
                 <div class="btn-group" role="group">
                     <input type="radio" class="btn-check" name="resType" id="typeIndiv" autocomplete="off" 
-                           checked="@(!currentReservation.IsGroupReservation)" 
+                           checked="@(!_currentReservation.IsGroupReservation)" 
                            @onchange="() => SetReservationType(false)">
                     <label class="btn btn-outline-primary px-4 fw-bold" for="typeIndiv">👤 Індивідуальне</label>
 
                     <input type="radio" class="btn-check" name="resType" id="typeGroup" autocomplete="off" 
-                           checked="@(currentReservation.IsGroupReservation)" 
+                           checked="@(_currentReservation.IsGroupReservation)" 
                            @onchange="() => SetReservationType(true)">
                     <label class="btn btn-outline-primary px-4 fw-bold" for="typeGroup">👥 Групове (Пара)</label>
                 </div>
             </div>
 
-            <EditForm Model="currentReservation" OnValidSubmit="SaveReservation">
+            <EditForm Model="_currentReservation" OnValidSubmit="SaveReservation">
                 
                 <div class="row g-4 mb-3">
-                    @if (!currentReservation.IsGroupReservation)
+                    @if (!_currentReservation.IsGroupReservation)
                     {
                         <div class="col-md-4">
                             <label class="form-label fw-bold text-dark">Комп'ютер</label>
-                            <InputSelect @bind-Value="currentReservation.ComputerId" class="form-select form-select-lg bg-light">
+                            <InputSelect @bind-Value="_currentReservation.ComputerId" class="form-select form-select-lg bg-light">
                                 <option value="" >-- Оберіть ПК --</option>
-                                @if(computers != null) { @foreach(var c in computers) { <option value="@c.Id">ПК #@c.InventoryNumber (Лаб. @c.LaboratoryId)</option> } }
+                                @if(_computers != null) { @foreach(var c in _computers) { <option value="@c.Id">ПК #@c.InventoryNumber (Лаб. @c.LaboratoryId)</option> } }
                             </InputSelect>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold text-dark">Студент</label>
-                            <InputSelect @bind-Value="currentReservation.StudentId" class="form-select form-select-lg bg-light">
+                            <InputSelect @bind-Value="_currentReservation.StudentId" class="form-select form-select-lg bg-light">
                                 <option value="" >-- Оберіть студента --</option>
-                                @if(students != null) { @foreach(var s in students) { <option value="@s.Id">@s.FullName</option> } }
+                                @if(_students != null) { @foreach(var s in _students) { <option value="@s.Id">@s.FullName</option> } }
                             </InputSelect>
                         </div>
                     }
@@ -81,62 +81,67 @@
                     {
                         <div class="col-md-4">
                             <label class="form-label fw-bold text-dark">Лабораторія</label>
-                            <InputSelect @bind-Value="currentReservation.LaboratoryId" class="form-select form-select-lg bg-light">
+                            <InputSelect @bind-Value="_currentReservation.LaboratoryId" class="form-select form-select-lg bg-light">
                                 <option value="" >-- Оберіть лабораторію --</option>
-                                @if(labs != null) { @foreach(var l in labs) { <option value="@l.Id">@l.Name (Ауд. @l.RoomNumber)</option> } }
+                                @if(_labs != null) { @foreach(var l in _labs) { <option value="@l.Id">@l.Name (Ауд. @l.RoomNumber)</option> } }
                             </InputSelect>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold text-dark">Група</label>
-                            <InputSelect @bind-Value="currentReservation.GroupId" class="form-select form-select-lg bg-light">
+                            <InputSelect @bind-Value="_currentReservation.GroupId" class="form-select form-select-lg bg-light">
                                 <option value="" >-- Оберіть групу --</option>
-                                @if(groups != null) { @foreach(var g in groups) { <option value="@g.Id">@g.Name</option> } }
+                                @if(_groups != null) { @foreach(var g in _groups) { <option value="@g.Id">@g.Name</option> } }
                             </InputSelect>
                         </div>
                     }
 
                     <div class="col-md-4">
                         <label class="form-label fw-bold text-dark">Викладач (необов'язково)</label>
-                        <InputSelect @bind-Value="currentReservation.TeacherId" class="form-select form-select-lg bg-light">
+                        <InputSelect @bind-Value="_currentReservation.TeacherId" class="form-select form-select-lg bg-light">
                             <option value="">-- Без викладача --</option>
-                            @if(teachers != null) { @foreach(var t in teachers) { <option value="@t.Id">@t.FullName</option> } }
+                            @if(_teachers != null) { @foreach(var t in _teachers) { <option value="@t.Id">@t.FullName</option> } }
                         </InputSelect>
                     </div>
                 </div>
-
+                
                 <div class="row g-4">
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">Час початку</label>
-                        <input type="datetime-local" class="form-control form-control-lg bg-light" @bind="currentReservation.StartTime" />
+                        <label class="form-label fw-bold text-dark">Дата проведення</label>
+                        <input type="date" class="form-control form-control-lg bg-light" @bind="_reservationDate" />
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold text-dark">Час завершення</label>
-                        <input type="datetime-local" class="form-control form-control-lg bg-light" @bind="currentReservation.EndTime" />
+                        <label class="form-label fw-bold text-dark">Номер пари</label>
+                        <select class="form-select form-select-lg bg-light fw-bold text-primary" @bind="_selectedPeriodNumber">
+                            @foreach (var period in _periods)
+                            {
+                                <option value="@period.Number">@period.DisplayText</option>
+                            }
+                        </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-bold text-dark">Мета </label>
-                        <InputText @bind-Value="currentReservation.Purpose" class="form-control form-control-lg bg-light" placeholder="напр. Лаб. з БД" />
+                        <InputText @bind-Value="_currentReservation.Purpose" class="form-control form-control-lg bg-light" placeholder="напр. Лаб. з БД" />
                     </div>
                 </div>
 
                 <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-3">
                     <button type="button" class="btn btn-light text-secondary rounded-pill px-4 fw-bold border" @onclick="CancelForm">Скасувати</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
-                        @(currentReservation.Id == 0 ? "Зберегти бронювання" : "Оновити бронювання")
+                        @(_currentReservation.Id == 0 ? "Зберегти бронювання" : "Оновити бронювання")
                     </button>
                 </div>
             </EditForm>
         </div>
     }
 
-    @if (reservations == null)
+    @if (_reservations == null)
     {
         <div class="text-center mt-5">
             <div class="spinner-border text-primary" role="status"></div>
             <p class="mt-2 text-muted">Завантаження розкладу...</p>
         </div>
     }
-    else if (!reservations.Any())
+    else if (!_reservations.Any())
     {
         <div class="shadow-sm p-5 text-center" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
             <i class="bi bi-calendar-x text-muted mb-3" style="font-size: 3rem;"></i>
@@ -145,7 +150,7 @@
     }
     else
     {
-        <div class="shadow-sm p-4" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
+        <div class="shadow-sm p-4 fade-in-up" style="background: white; border-radius: 12px; border: 1px solid #edf0f5;">
             <div class="table-responsive">
                 <table class="table table-hover border-white mb-0">
                     <thead class="text-secondary small text-uppercase fw-bold">
@@ -159,8 +164,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var res in reservations)
+                        @foreach (var res in PaginatedReservations)
                         {
+                            // Визначаємо номер пари для відображення в таблиці
+                            var matchedPeriod = _periods.FirstOrDefault(p => p.Start == res.StartTime.TimeOfDay);
+                            string periodDisplay = matchedPeriod != null ? $"{matchedPeriod.Number} пара" : "Свій час";
+
                             <tr>
                                 <td class="align-middle text-muted fw-bold">#@res.Id</td>
                                 
@@ -192,8 +201,10 @@
                                 
                                 <td class="align-middle">
                                     <div class="d-flex flex-column small">
-                                        <span class="text-success fw-bold">@res.StartTime.ToString("dd.MM HH:mm")</span>
-                                        <span class="text-danger fw-bold">@res.EndTime.ToString("dd.MM HH:mm")</span>
+                                        <span class="text-primary fw-bold mb-1">@res.StartTime.ToString("dd.MM.yyyy")</span>
+                                        <span class="badge bg-light text-dark border d-inline-block" style="width: max-content;">
+                                            @periodDisplay (@res.StartTime.ToString("HH:mm") - @res.EndTime.ToString("HH:mm"))
+                                        </span>
                                     </div>
                                 </td>
                                 
@@ -206,21 +217,90 @@
                     </tbody>
                 </table>
             </div>
+
+            @if (TotalPages > 1)
+            {
+                <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination mb-0 shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                            <li class="page-item @(_currentPage == 1 ? "disabled" : "")">
+                                <button class="page-link text-primary fw-bold" @onclick="() => GoToPage(_currentPage - 1)">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                            </li>
+                            
+                            @for (int i = 1; i <= TotalPages; i++)
+                            {
+                                int pageNumber = i; 
+                                <li class="page-item @(_currentPage == pageNumber ? "active" : "")">
+                                    <button class="page-link fw-bold" @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                                </li>
+                            }
+                            
+                            <li class="page-item @(_currentPage == TotalPages ? "disabled" : "")">
+                                <button class="page-link text-primary fw-bold" @onclick="() => GoToPage(_currentPage + 1)">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
         </div>
     }
 </div>
 
+<style>
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    @@keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(15px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
 @code {
-    private List<Reservation>? reservations;
-    private List<Computer>? computers;
-    private List<Student>? students;
-    private List<Teacher>? teachers;
-    private List<DBPCLabs.Models.Laboratory>? labs;
-    private List<Group>? groups;
+    private List<Reservation>? _reservations;
+    private List<Computer>? _computers;
+    private List<Student>? _students;
+    private List<Teacher>? _teachers;
+    private List<DBPCLabs.Models.Laboratory>? _labs;
+    private List<Group>? _groups;
     
-    private Reservation currentReservation = new();
-    private bool showForm = false;
-    private string? errorMessage;
+    private Reservation _currentReservation = new();
+    private bool _showForm = false;
+    private string? _errorMessage;
+    
+    private DateTime _reservationDate = DateTime.Today;
+    private int _selectedPeriodNumber = 1;
+
+    private int _currentPage = 1;
+    private readonly int _pageSize = 10;
+    
+    private class ClassPeriod
+    {
+        public int Number { get; set; }
+        public TimeSpan Start { get; set; }
+        public TimeSpan End { get; set; }
+        public string DisplayText => $"{Number} пара ({Start:hh\\:mm} - {End:hh\\:mm})";
+    }
+
+    private List<ClassPeriod> _periods = new()
+    {
+        new ClassPeriod { Number = 1, Start = new TimeSpan(8, 0, 0), End = new TimeSpan(9, 20, 0) },
+        new ClassPeriod { Number = 2, Start = new TimeSpan(9, 40, 0), End = new TimeSpan(11, 0, 0) },
+        new ClassPeriod { Number = 3, Start = new TimeSpan(11, 20, 0), End = new TimeSpan(12, 40, 0) },
+        new ClassPeriod { Number = 4, Start = new TimeSpan(13, 0, 0), End = new TimeSpan(14, 20, 0) },
+        new ClassPeriod { Number = 5, Start = new TimeSpan(14, 40, 0), End = new TimeSpan(16, 0, 0) },
+        new ClassPeriod { Number = 6, Start = new TimeSpan(16, 20, 0), End = new TimeSpan(17, 40, 0) }
+    };
+
+    private int TotalPages => _reservations != null ? (int)Math.Ceiling((double)_reservations.Count / _pageSize) : 0;
+
+    private IEnumerable<Reservation> PaginatedReservations => 
+        _reservations?.Skip((_currentPage - 1) * _pageSize).Take(_pageSize) ?? Array.Empty<Reservation>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -229,40 +309,66 @@
 
     private async Task LoadData()
     {
-        reservations = await ReservationRepo.GetAllAsync();
-        computers = await ComputerRepo.GetAllAsync(); 
-        students = await StudentRepo.GetAllAsync();
-        teachers = await TeacherRepo.GetAllAsync();
-        labs = await LabRepo.GetAllAsync();
-        groups = await GroupRepo.GetAllAsync();
+        _reservations = await ReservationRepo.GetAllAsync();
+        
+        if (_reservations != null)
+        {
+            _reservations = _reservations.OrderByDescending(r => r.StartTime).ToList();
+        }
+
+        _computers = await ComputerRepo.GetAllAsync(); 
+        _students = await StudentRepo.GetAllAsync();
+        _teachers = await TeacherRepo.GetAllAsync();
+        _labs = await LabRepo.GetAllAsync();
+        _groups = await GroupRepo.GetAllAsync();
+        
+        if (_currentPage > TotalPages && TotalPages > 0)
+        {
+            _currentPage = TotalPages;
+        }
+    }
+
+    private void GoToPage(int page)
+    {
+        if (page >= 1 && page <= TotalPages)
+        {
+            _currentPage = page;
+        }
     }
 
     private void SetReservationType(bool isGroup)
     {
-        currentReservation.IsGroupReservation = isGroup;
-        currentReservation.ComputerId = null;
-        currentReservation.StudentId = null;
-        currentReservation.LaboratoryId = null;
-        currentReservation.GroupId = null;
+        _currentReservation.IsGroupReservation = isGroup;
+        _currentReservation.ComputerId = null;
+        _currentReservation.StudentId = null;
+        _currentReservation.LaboratoryId = null;
+        _currentReservation.GroupId = null;
     }
 
     private void ShowAddForm()
     {
-        errorMessage = null;
-        currentReservation = new Reservation 
+        _errorMessage = null;
+        
+        _reservationDate = DateTime.Today;
+        _selectedPeriodNumber = 1;
+
+        _currentReservation = new Reservation 
         { 
             Id = 0, 
-            IsGroupReservation = false,
-            StartTime = DateTime.Today.AddHours(9),
-            EndTime = DateTime.Today.AddHours(10).AddMinutes(30)
+            IsGroupReservation = false
         }; 
-        showForm = true;
+        _showForm = true;
     }
 
     private void EditReservation(Reservation res)
     {
-        errorMessage = null;
-        currentReservation = new Reservation
+        _errorMessage = null;
+        
+        _reservationDate = res.StartTime.Date;
+        var matchedPeriod = _periods.FirstOrDefault(p => p.Start == res.StartTime.TimeOfDay);
+        _selectedPeriodNumber = matchedPeriod != null ? matchedPeriod.Number : 1;
+
+        _currentReservation = new Reservation
         {
             Id = res.Id,
             IsGroupReservation = res.IsGroupReservation,
@@ -275,53 +381,52 @@
             EndTime = res.EndTime,
             Purpose = res.Purpose
         };
-        showForm = true;
+        _showForm = true;
     }
 
     private void CancelForm()
     {
-        showForm = false;
-        errorMessage = null;
+        _showForm = false;
+        _errorMessage = null;
     }
 
     private async Task SaveReservation()
     {
-        errorMessage = null;
+        _errorMessage = null;
         
-        if (currentReservation.IsGroupReservation)
+        if (_currentReservation.IsGroupReservation)
         {
-            if (currentReservation.LaboratoryId == null || currentReservation.LaboratoryId == 0) { errorMessage = "Оберіть лабораторію!"; return; }
-            if (currentReservation.GroupId == null || currentReservation.GroupId == 0) { errorMessage = "Оберіть групу!"; return; }
+            if (_currentReservation.LaboratoryId == null || _currentReservation.LaboratoryId == 0) { _errorMessage = "Оберіть лабораторію!"; return; }
+            if (_currentReservation.GroupId == null || _currentReservation.GroupId == 0) { _errorMessage = "Оберіть групу!"; return; }
         }
         else
         {
-            if (currentReservation.ComputerId == null || currentReservation.ComputerId == 0) { errorMessage = "Оберіть комп'ютер!"; return; }
-            if (currentReservation.StudentId == null || currentReservation.StudentId == 0) { errorMessage = "Оберіть студента!"; return; }
+            if (_currentReservation.ComputerId == null || _currentReservation.ComputerId == 0) { _errorMessage = "Оберіть комп'ютер!"; return; }
+            if (_currentReservation.StudentId == null || _currentReservation.StudentId == 0) { _errorMessage = "Оберіть студента!"; return; }
         }
+        
+        var period = _periods.First(p => p.Number == _selectedPeriodNumber);
+        _currentReservation.StartTime = _reservationDate.Add(period.Start);
+        _currentReservation.EndTime = _reservationDate.Add(period.End);
 
-        if (currentReservation.StartTime >= currentReservation.EndTime)
-        {
-            errorMessage = "Час завершення має бути пізніше часу початку!"; return;
-        }
-
-        var validationError = await ReservationRepo.ValidateReservationAsync(currentReservation);
+        var validationError = await ReservationRepo.ValidateReservationAsync(_currentReservation);
         if (validationError != null)
         {
-            errorMessage = validationError; 
+            _errorMessage = validationError; 
             return;
         }
 
-        if (currentReservation.Id == 0)
+        if (_currentReservation.Id == 0)
         {
-            await ReservationRepo.AddAsync(currentReservation);
+            await ReservationRepo.AddAsync(_currentReservation);
         }
         else
         {
-            await ReservationRepo.UpdateAsync(currentReservation);
+            await ReservationRepo.UpdateAsync(_currentReservation);
         }
         
         await LoadData(); 
-        showForm = false;   
+        _showForm = false;   
     }
 
     private async Task DeleteReservation(int id)

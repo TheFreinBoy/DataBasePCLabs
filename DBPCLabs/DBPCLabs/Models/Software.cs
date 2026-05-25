@@ -10,7 +10,7 @@ public class Software
     [StringLength(100, ErrorMessage = "Назва не може перевищувати 100 символів.")]
     public string Name { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Вкажіть версію (напр. 2024, 1.0 або ОСТАННЯ).")]
+    [Required(ErrorMessage = "Вкажіть версію .")]
     public string Version { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Оберіть тип ліцензії.")]
