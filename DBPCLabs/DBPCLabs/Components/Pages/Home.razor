@@ -9,25 +9,25 @@
 
 <PageTitle>UniLab Manager — Головна</PageTitle>
 
-<div class="hero-section text-center d-flex align-items-center justify-content-center">
-    <div class="container py-5 fade-in-up">
+<div class="hero-section d-flex align-items-center justify-content-center position-relative">
+    <div class="container py-5 fade-in-up text-center">
         
-        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle text-uppercase rounded-pill px-4 py-2 mb-4 fw-bold shadow-sm">
-            <i class="bi bi-stars me-1"></i> Система управління лабораторіями
-        </span>
-        
-        <h1 class="fw-bold display-3 mb-4 mt-2 text-dark" style="line-height: 1.15; letter-spacing: -1px;">
-            Модернізуйте свою<br /> <span class="text-primary">комп'ютерну лабораторію</span>
+        <h1 class="display-1 text-dark mb-3 text-uppercase" style="font-weight: 900; letter-spacing: -2px;">
+            UNILAB <span class="text-primary">MANAGER</span>
         </h1>
         
-        <p class="text-secondary fs-5 mx-auto mb-5" style="max-width: 650px; line-height: 1.6;">
-            UniLab Manager розроблено спеціально для університетів та освітніх центрів. 
-            Наша мета — спростити рутинні процеси інвентаризації, забезпечити контроль за використанням ПЗ та створити сучасне цифрове середовище.
+        <p class="text-secondary fs-4 mx-auto mb-5" style="max-width: 800px; font-weight: 500;">
+            Централізована система адміністрування комп'ютерних лабораторій, інвентаризації техніки та планування розкладу.
         </p>
         
-        <a href="#quick-access" class="btn btn-primary rounded-pill btn-lg px-5 py-3 fw-bold shadow mt-2 transition-all hover-lift">
-            <i class="bi bi-chevron-double-down me-2"></i> Дашборд
-        </a>
+        <div class="d-flex gap-3 justify-content-center mt-2">
+            <a href="#quick-access" class="btn btn-primary rounded-pill btn-lg px-5 py-3 fw-bold shadow-lg transition-all hover-lift">
+                <i class="bi bi-rocket-takeoff me-2"></i> Розпочати роботу
+            </a>
+            <a href="/reports" class="btn btn-outline-dark rounded-pill btn-lg px-5 py-3 fw-bold transition-all hover-lift bg-white">
+                <i class="bi bi-graph-up-arrow me-2"></i> Аналітика
+            </a>
+        </div>
     </div>
 </div>
 
@@ -176,15 +176,14 @@
 <style>
     .hero-section {
         background: linear-gradient(135deg, #f8f9fa 0%, #eef2f7 100%);
-        min-height: 80vh; 
+        min-height: 65vh; 
         border-bottom-left-radius: 50px;
         border-bottom-right-radius: 50px;
-        position: relative;
         box-shadow: 0 10px 30px rgba(0,0,0,0.02);
     }
     
     .cards-section {
-        padding-top: 5rem;
+        padding-top: 4rem;
     }
 
     .icon-container {
@@ -224,7 +223,7 @@
 
     .hover-lift:hover {
         transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(13, 110, 253, 0.2) !important;
+        box-shadow: 0 10px 25px rgba(13, 110, 253, 0.25) !important;
     }
     
     .hover-btn:hover {
